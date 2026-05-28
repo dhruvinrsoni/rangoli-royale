@@ -150,11 +150,11 @@ If you catch yourself thinking any of these, stop immediately:
 
 ```bash
 # Run tests to verify fix
-{{TEST_COMMAND}}
+# Open tests.html in a browser; all assertions should be green
 
 # Check what changed
 git diff HEAD~1
 
 # Confirm no regressions
-{{BUILD_COMMAND}}
+# No build step — test manually in browser
 ```

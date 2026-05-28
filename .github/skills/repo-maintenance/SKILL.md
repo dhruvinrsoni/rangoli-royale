@@ -175,10 +175,10 @@ After cleanup, verify nothing broke:
 
 ```bash
 # 1. Build passes
-{{BUILD_COMMAND}}
+# No build step — manual verification in browser
 
 # 2. Tests pass
-{{TEST_COMMAND}}
+# Open tests.html in a browser; all assertions should be green
 
 # 3. No broken imports (search for deleted/moved filenames)
 for f in $(git diff --name-only --diff-filter=D HEAD~5); do
