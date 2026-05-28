@@ -1,7 +1,9 @@
-import { currentTeam, applyMove, deriveGrid, InvalidMoveError, MoveError, turnNumberForTeam } from '../lib/turn-engine.js';
+import { currentTeam, applyMove, deriveGrid, InvalidMoveError, MoveError, turnNumberForTeam, undoLastMove } from '../lib/turn-engine.js';
 import { scoreFor } from '../lib/scoring.js';
 import { getCurrentGame, saveCurrentGame, clearCurrentGame } from '../lib/storage.js';
 import { renderGridSvg } from './game-render.js';
+import { buzz } from '../features/haptic.js';
+import { isEnabled } from '../config/features.js';
 
 let state = null;
 let grid = null;
@@ -98,6 +100,7 @@ export function _handleEdgeTap(edgeId) {
   try {
     state = applyMove(state, edgeId);
     saveCurrentGame(state);
+    buzz('tap');
     render();
   } catch (err) {
     if (err instanceof InvalidMoveError) {
@@ -114,7 +117,7 @@ function flashError(code) {
   host.classList.remove('shake');
   void host.offsetWidth;
   host.classList.add('shake');
-  if (navigator.vibrate) navigator.vibrate(80);
+  buzz('invalid');
   const msg = ({
     [MoveError.WRONG_TEAM]: 'Not your team\'s edge',
     [MoveError.ALREADY_CLAIMED]: 'Already drawn',
