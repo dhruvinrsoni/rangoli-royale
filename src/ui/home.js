@@ -47,13 +47,12 @@ export function mount(target) {
 
   renderShell();
 
-  const installBtn = target.querySelector('#install-btn');
-  if (installBtn) {
-    installBtn.addEventListener('click', async () => {
+  target.addEventListener('click', async (e) => {
+    if (e.target.closest('#install-btn')) {
       const accepted = await triggerInstall();
       if (accepted) renderShell();
-    });
-  }
+    }
+  });
 
   installListener = () => renderShell();
   window.addEventListener('rr:install-available', installListener);
