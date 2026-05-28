@@ -1,15 +1,39 @@
-// Service Worker — rangoli-royale v1
-const CACHE_NAME = 'rangoli-royale-v2';
+const CACHE_NAME = 'rangoli-royale-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
+  './assets/icons/icon.svg',
   './src/main.js',
+  './src/lib/events.js',
+  './src/lib/geometry.js',
+  './src/lib/turn-engine.js',
+  './src/lib/scoring.js',
+  './src/lib/storage.js',
+  './src/config/features.js',
+  './src/config/difficulty.js',
+  './src/config/color-presets.js',
+  './src/ui/home.js',
+  './src/ui/setup.js',
+  './src/ui/game.js',
+  './src/ui/game-render.js',
+  './src/ui/endgame.js',
+  './src/ui/settings.js',
+  './src/ui/stats.js',
+  './src/ui/howto.js',
+  './src/features/haptic.js',
+  './src/features/turn-timer.js',
+  './src/features/sound-fx.js',
   './src/styles/base.css',
-  './src/styles/themes.css'
+  './src/styles/themes.css',
+  './src/styles/home.css',
+  './src/styles/setup.css',
+  './src/styles/game.css',
+  './src/styles/endgame.css',
+  './src/styles/settings.css',
+  './src/styles/stats.css'
 ];
 
-// Install — precache all static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -18,7 +42,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate — clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
@@ -30,13 +53,11 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch — cache-first strategy
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
       .then(cached => cached || fetch(event.request)
         .then(response => {
-          // Cache successful GET requests
           if (event.request.method === 'GET' && response.status === 200) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
@@ -45,7 +66,6 @@ self.addEventListener('fetch', (event) => {
         })
       )
       .catch(() => {
-        // Fallback for navigation requests
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
