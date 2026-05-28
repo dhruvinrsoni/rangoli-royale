@@ -1,12 +1,15 @@
 {
-  "name": "rangoli-royale",
-  "short_name": "RangoliRoyale",
-  "description": "A 2-team strategy game on a rangoli dot grid",
+  "name": "Rangoli Royale",
+  "short_name": "Rangoli Royale",
+  "description": "A 2-team strategy game on a rangoli dot grid — pass the device, draw a line, block your rival.",
   "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#007BFF",
+  "background_color": "#0d1117",
+  "theme_color": "#f59e0b",
   "orientation": "any",
+  "lang": "en-IN",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "assets/icons/favicon-192.png",
