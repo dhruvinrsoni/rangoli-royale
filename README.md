@@ -1,106 +1,85 @@
-# project-templates
+# Rangoli Royale
 
-A base + overlay composition system for generating new projects with world-class scaffolding. Every new project starts with production-grade CI/CD, CLAUDE.md, skills, issue templates, security scanning, and conventions — from day one.
+> Draw the line. Hold the grid.
 
-## Quick Start
+A two-team strategy game on a South Asian rangoli/kolam dot grid. Pass the device. Take turns. Block your rival.
 
-```bash
-# Generate a new project
-node scripts/init-project.mjs --flavor react-vite-pwa --name my-dashboard --description "Admin dashboard"
+**Live:** https://dhruvinrsoni.github.io/rangoli-royale/
 
-# Preview what would be generated (no files written)
-node scripts/init-project.mjs --flavor node-typescript --name my-lib --dry-run
-```
+---
 
-## 8 Template Flavors
+## What it is
 
-| Flavor | Stack | Best for |
-|--------|-------|----------|
-| `vanilla-pwa` | HTML/CSS/JS | Static PWAs, GitHub Pages apps |
-| `node-typescript` | Node.js + TypeScript + Vitest | npm packages, CLI tools, libraries |
-| `react-vite-pwa` | React + Vite + Tailwind | Web apps, dashboards, SPAs |
-| `chrome-extension` | TypeScript + esbuild + Chrome MV3 | Browser extensions |
-| `spring-boot` | Java 21 + Spring Boot 3 + Gradle | REST APIs, microservices |
-| `scripts-toolbox` | Bash + PowerShell + Python | Script collections, toolboxes |
-| `nano-app-collection` | Vanilla JS + Core framework | Micro-app dashboards |
-| `python-tool` | Python 3.10+ + pytest + mypy + ruff | Python CLIs, utilities |
+A grid of dots in two alternating colors. Players sit in a circle in alternating team order and pass one device around. Each turn, the active player draws **one** straight line between two same-color dots of their team — horizontal or vertical. The geometry creates strategic blocking: a horizontal line of one color cuts through where the other team might have wanted a vertical line.
 
-## What Every Generated Project Gets
+Two win modes ship in v1, selectable at setup:
 
-### From the shared base layer:
-- **CLAUDE.md** — AI-optimized project context with Critical File Map, commands, skills index
-- **Security workflow** — secret detection + dependency audit (npm/pip/gradle-aware)
-- **Label system** — Type + Priority + Status + Agent labels, auto-synced
-- **Issue templates** — Structured bug reports and feature requests
-- **PR template** — Checklist-driven pull request review
-- **Repo-maintenance skill v2.0** — Adaptive cleanup with greedy optimization
-- **.editorconfig** — Consistent formatting across editors
-- **.gitattributes** — Cross-platform line ending normalization
+- **Longest single line** — longest unbroken straight chain of your team's edges.
+- **Largest connected tree** — largest connected subgraph of dots joined by your team's edges.
 
-### Plus flavor-specific:
-- CI/CD workflows tuned for the stack
-- Build configs, test setup, linting rules
-- Copilot instructions and design philosophy docs
-- Domain-specific skills (PWA, testing, nano-app protocol, etc.)
+The game ends when neither team has a legal move, or when every legal edge is claimed.
 
-## Architecture
+---
 
-```
-project-templates/
-├── base/                  # Shared across ALL flavors
-│   ├── CLAUDE.md.template
-│   ├── .github/           # Labels, PR/issue templates, security workflow, skills
-│   └── ...
-├── flavors/               # One directory per flavor (only the delta from base)
-│   ├── vanilla-pwa/
-│   ├── node-typescript/
-│   ├── react-vite-pwa/
-│   ├── chrome-extension/
-│   ├── spring-boot/
-│   ├── scripts-toolbox/
-│   ├── nano-app-collection/
-│   └── python-tool/
-├── scripts/
-│   ├── init-project.mjs   # Generator (zero dependencies)
-│   └── validate-templates.py
-├── registry.yaml          # Template & skill registry
-└── CLAUDE.md              # Meta-context for this repo
-```
+## Why a PWA
 
-### How generation works:
+- One device, pass it around — works exactly like the paper version.
+- Install on phone, play offline at a wedding / pooja / car ride / Diwali party.
+- Zero account, zero login, zero telemetry — every game stays on the device.
+- All settings, in-progress games, and history live in `localStorage`.
 
-1. **Copy** `base/` to target directory
-2. **Overlay** `flavors/<flavor>/` on top (merges `.github/` directories)
-3. **Replace** `{{TEMPLATE_VARS}}` in all `.template` files, strip suffix
-4. **Append** `.overlay` file contents to matching base files
-5. **Done** — project is ready for `git init`
+---
 
-## Generator Options
+## Run locally
 
-```
-node scripts/init-project.mjs --flavor <flavor> --name <name> [options]
-
-Required:
-  --flavor       Template flavor (see table above)
-  --name         Project name in kebab-case
-
-Optional:
-  --description  One-line project description (default: "A new project")
-  --author       Author name (default: "Dhruvin Rupesh Soni")
-  --github-user  GitHub username (default: "dhruvinrsoni")
-  --license      MIT | Apache-2.0 (default: "MIT")
-  --output       Output directory (default: ../<name>/)
-  --dry-run      Preview without writing files
-```
-
-## Validation
+No build step. Any static server works.
 
 ```bash
-python scripts/validate-templates.py
+cd rangoli-royale
+python -m http.server 8000
+# then visit http://localhost:8000
 ```
 
-Checks: template variable consistency, SKILL.md frontmatter, required base files, flavor completeness.
+Or open `index.html` directly in a browser (service worker registration may be skipped on `file://`).
+
+---
+
+## Game engine tests
+
+Open [tests.html](tests.html) in a browser. All assertions log to the console.
+
+---
+
+## Tech
+
+Vanilla HTML + CSS + JS. ES modules. SVG grid. CSS custom properties for theming. No bundler, no framework, no npm dependencies. Designed so the v1 engine is a pure deterministic state machine — v2 (online multiplayer via Vercel/Supabase) wraps it without rewrite.
+
+| Area | Where |
+|---|---|
+| Pure game engine | `src/lib/{geometry,turn-engine,scoring}.js` |
+| Storage abstraction | `src/lib/storage.js` |
+| UI screens | `src/ui/{home,setup,game,endgame,settings,stats,howto}.js` |
+| Feature flags | `src/config/features.js` |
+| Add-ons (timer, undo, haptic, etc.) | `src/features/*/` |
+| Rules text | [docs/rules.md](docs/rules.md) |
+| Deployment | [docs/deployment.md](docs/deployment.md) |
+
+---
+
+## Deployment
+
+Push to `main` → GitHub Actions builds and deploys to GitHub Pages. Health check pings the live URL every 6 hours. Versioned releases are cut via manual workflow dispatch on `create-tag-release.yml`.
+
+See [docs/deployment.md](docs/deployment.md) for the full deploy / release / rollback flow.
+
+---
+
+## How to play
+
+See [docs/rules.md](docs/rules.md) or tap **How to Play** from the home screen.
+
+---
 
 ## License
 
-Apache License 2.0 — See [LICENSE](LICENSE)
+[Apache-2.0](LICENSE) — Copyright © Dhruvin Rupesh Soni.
