@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rangoli Royale — Engine Tests</title>
+  <style>
+    body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; max-width: 900px; margin: 2rem auto; padding: 0 1rem; background: #0d1117; color: #e6edf3; }
+    h1 { color: #f59e0b; }
+    #summary { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-weight: 600; }
+    .ok { background: #134f1a; color: #d2f8d8; }
+    .fail { background: #5f1a1a; color: #ffd0d0; }
+    pre { background: #161b22; padding: 1rem; border-radius: 8px; line-height: 1.55; white-space: pre-wrap; }
+    .pass { color: #58c777; }
+    .failline { color: #ff8b8b; }
+    .section { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <h1>Rangoli Royale — Engine Tests</h1>
+  <div id="summary">Running…</div>
+  <pre id="output"></pre>
+
+  <script type="module">
+    import { generateGrid, edgesIntersect } from './src/lib/geometry.js';
+    import { createGame, applyMove, currentTeam, legalMovesFor, undoLastMove, InvalidMoveError, MoveError } from './src/lib/turn-engine.js';
+    import { longestLine, largestTree, scoreFor, determineWinner } from './src/lib/scoring.js';
+
+    const out = document.getElementById('output');
+    const summary = document.getElementById('summary');
+    let passed = 0, failed = 0;
+
+    function section(title) {
+      out.innerHTML += `<span class="section">── ${title} ──</span>\n`;
+    }
+    function assertEq(actual, expected, label) {
+      const ok = Object.is(actual, expected) || (Array.isArray(actual) && Array.isArray(expected) && actual.length === expected.length && actual.every((v, i) => v === expected[i]));
+      if (ok) {
+        out.innerHTML += `<span class="pass">PASS</span>  ${label}\n`;
+        passed++;
+      } else {
+        out.innerHTML += `<span class="failline">FAIL</span>  ${label}\n      expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}\n`;
+        failed++;
+      }
+    }
+    function assertTrue(value, label) { assertEq(!!value, true, label); }
+    function assertThrows(fn, expectedCode, label) {
+      try {
+        fn();
+        out.innerHTML += `<span class="failline">FAIL</span>  ${label}: did not throw\n`;
+        failed++;
+      } catch (e) {
+        if (expectedCode && e.code !== expectedCode) {
+          out.innerHTML += `<span class="failline">FAIL</span>  ${label}: wrong error code (got ${e.code}, want ${expectedCode})\n`;
+          failed++;
+        } else {
+          out.innerHTML += `<span class="pass">PASS</span>  ${label}\n`;
+          passed++;
+        }
+      }
+    }
+
+    const makeGame = (overrides = {}) => createGame({
+      rows: 4, cols: 4, playerCount: 2, winMode: 'line',
+      teams: { A: { name: 'Saffron' }, B: { name: 'Indigo' } },
+      startingTeam: 'A',
+      ...overrides,
+    });
+
+    section('Geometry');
+    const grid = generateGrid({ rows: 4, cols: 4, spacing: 40 });
+    assertEq(grid.dots.length, 16, '4x4 dot count = 16');
+    assertEq(grid.legalEdges.length, 20, '4x4 legal edge count = 20 (12 vertical + 8 horizontal)');
+    assertEq(grid.legalEdges.filter(e => e.team === 'A').length, 10, '4x4 team A edges = 10');
+    assertEq(grid.legalEdges.filter(e => e.team === 'B').length, 10, '4x4 team B edges = 10');
+    assertEq(grid.crossings.get('h-0-0').size, 2, 'h-0-0 crosses 2 B edges (v-1-0 + parallel h-1-0)');
+    assertTrue(grid.crossings.get('h-0-0').has('v-1-0'), 'h-0-0 crosses perpendicular v-1-0');
+    assertTrue(grid.crossings.get('h-0-0').has('h-1-0'), 'h-0-0 overlaps parallel B horizontal h-1-0');
+    assertEq(grid.crossings.get('h-0-1').size, 3, 'h-0-1 crosses 3 B edges (2 verticals + 1 parallel horizontal)');
+    assertEq(grid.crossings.get('v-0-0').size, 0, 'v-0-0 (col 0, leftmost) crosses 0 B edges');
+
+    section('edgesIntersect (geometric primitive)');
+    const a = grid.edgeById.get('h-0-1');
+    const b = grid.edgeById.get('v-1-0');
+    assertTrue(edgesIntersect(a, b), 'h-0-1 ∩ v-1-0 (endpoint at dot)');
+    const c = grid.edgeById.get('v-3-0');
+    assertEq(edgesIntersect(a, c), false, 'h-0-1 ∩ v-3-0 (far column)');
+
+    section('Turn engine — happy path');
+    let s = makeGame();
+    assertEq(s.status, 'in-progress', 'new game is in-progress');
+    assertEq(currentTeam(s), 'A', 'starts with team A');
+    assertEq(s.moveLog.length, 0, 'empty move log');
+    s = applyMove(s, 'v-0-0');
+    assertEq(s.moveLog.length, 1, 'one move recorded');
+    assertEq(s.moveLog[0].team, 'A', 'first move belongs to A');
+    assertEq(currentTeam(s), 'B', 'B is up next');
+    s = applyMove(s, 'v-1-0');
+    assertEq(currentTeam(s), 'A', 'alternates back to A');
+
+    section('Turn engine — invalid moves');
+    let s2 = makeGame();
+    assertThrows(() => applyMove(s2, 'v-1-0'), MoveError.WRONG_TEAM, 'A cannot play B edge');
+    assertThrows(() => applyMove(s2, 'nonexistent'), MoveError.UNKNOWN_EDGE, 'unknown edge id rejected');
+    const s2b = applyMove(s2, 'v-0-0');
+    assertThrows(() => applyMove(s2b, 'v-0-0'), MoveError.ALREADY_CLAIMED, 'cannot claim same edge twice');
+
+    section('Turn engine — crossing blocks opponent');
+    let s3 = makeGame();
+    s3 = applyMove(s3, 'h-0-1');
+    assertThrows(() => applyMove(s3, 'v-1-0'), MoveError.BLOCKED_BY_CROSSING, 'B v-1-0 blocked by A h-0-1');
+    assertThrows(() => applyMove(s3, 'v-1-1'), MoveError.BLOCKED_BY_CROSSING, 'B v-1-1 blocked by A h-0-1');
+    s3 = applyMove(s3, 'v-1-2');
+    assertEq(s3.moveLog.length, 2, 'rejected blocks do not advance log; legal B move does');
+
+    section('Scoring — longest line');
+    let s4 = makeGame();
+    s4 = applyMove(s4, 'v-0-0');
+    s4 = applyMove(s4, 'v-3-0');
+    s4 = applyMove(s4, 'v-0-1');
+    s4 = applyMove(s4, 'v-3-1');
+    s4 = applyMove(s4, 'v-0-2');
+    assertEq(longestLine(s4, 'A'), 3, "A's three v-0-* verticals form a run of 3");
+    assertEq(longestLine(s4, 'B'), 2, "B's two v-3-* verticals form a run of 2");
+
+    section('Scoring — largest tree');
+    assertEq(largestTree(s4, 'A'), 4, "A's chain spans 4 dots (col 0, rows 0-3)");
+    assertEq(largestTree(s4, 'B'), 3, "B's chain spans 3 dots (col 3, rows 0-2)");
+
+    section('Scoring — winner determination');
+    const result = determineWinner(s4);
+    assertEq(result.winner, 'A', 'A wins on longest line');
+    assertEq(result.scores.A, 3, 'reported A score = 3');
+    assertEq(result.scores.B, 2, 'reported B score = 2');
+
+    section('Scoring — tree mode dispatch');
+    const s4tree = { ...s4, setup: { ...s4.setup, winMode: 'tree' } };
+    assertEq(scoreFor(s4tree, 'A'), 4, 'tree mode uses dot count');
+    assertEq(determineWinner(s4tree).winner, 'A', 'A also wins on tree count');
+
+    section('Undo');
+    const before = s4.moveLog.length;
+    const undone = undoLastMove(s4);
+    assertEq(undone.moveLog.length, before - 1, 'undo pops one move');
+    assertEq(undone.status, 'in-progress', 'undo resets to in-progress');
+
+    out.innerHTML += `\n${passed} passed · ${failed} failed\n`;
+    summary.textContent = failed ? `❌  ${failed} failing of ${passed + failed}` : `✓  All ${passed} tests passed`;
+    summary.className = failed ? 'fail' : 'ok';
+    document.title = failed ? `${failed} FAIL — Rangoli Royale Tests` : `${passed} pass — Rangoli Royale Tests`;
+  </script>
+</body>
+</html>
