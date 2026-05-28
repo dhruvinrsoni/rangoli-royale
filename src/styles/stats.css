@@ -1,0 +1,96 @@
+.stats-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--rr-space-3);
+  margin-bottom: var(--rr-space-4);
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--rr-space-4);
+  background: var(--rr-bg-card);
+  border-radius: var(--rr-radius);
+}
+.stat-label {
+  font-size: var(--rr-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rr-text-muted);
+}
+.stat-value {
+  font-size: var(--rr-text-3xl);
+  font-weight: 700;
+  color: var(--rr-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-section {
+  background: var(--rr-bg-card);
+  border-radius: var(--rr-radius);
+  padding: var(--rr-space-4);
+  margin-bottom: var(--rr-space-4);
+}
+.stats-section h2 {
+  font-size: var(--rr-text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rr-text-muted);
+  margin-bottom: var(--rr-space-3);
+}
+
+.tally {
+  display: grid;
+  gap: var(--rr-space-1);
+}
+.tally li {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--rr-space-2);
+  background: var(--rr-bg-elevated);
+  border-radius: var(--rr-radius-sm);
+}
+.tally-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--rr-accent);
+}
+
+.history {
+  display: grid;
+  gap: var(--rr-space-2);
+}
+.history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--rr-space-3);
+  background: var(--rr-bg-elevated);
+  border-radius: var(--rr-radius-sm);
+  gap: var(--rr-space-3);
+}
+.history-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.history-winner { font-weight: 600; }
+.history-meta {
+  font-size: var(--rr-text-xs);
+  color: var(--rr-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.history-date {
+  font-size: var(--rr-text-xs);
+  color: var(--rr-text-muted);
+  white-space: nowrap;
+}
+
+.empty {
+  text-align: center;
+  margin: var(--rr-space-5) 0;
+}
