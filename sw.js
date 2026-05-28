@@ -1,13 +1,12 @@
 // Service Worker — rangoli-royale v1
-const CACHE_NAME = 'rangoli-royale-v1';
+const CACHE_NAME = 'rangoli-royale-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './css/style.css',
-  './js/app.js',
   './manifest.json',
-  './assets/icons/favicon-192.png',
-  './assets/icons/favicon-512.png'
+  './src/main.js',
+  './src/styles/base.css',
+  './src/styles/themes.css'
 ];
 
 // Install — precache all static assets

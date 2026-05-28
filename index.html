@@ -29,7 +29,8 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%230d1117'/><g fill='%23f59e0b'><circle cx='32' cy='12' r='4'/><circle cx='52' cy='32' r='4'/><circle cx='32' cy='52' r='4'/><circle cx='12' cy='32' r='4'/><circle cx='32' cy='32' r='5'/></g><g stroke='%23f59e0b' stroke-width='2' fill='none'><path d='M32 12 L52 32 L32 52 L12 32 Z'/></g></svg>">
   <link rel="apple-touch-icon" href="assets/icons/favicon-512.png">
 
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="src/styles/base.css">
+  <link rel="stylesheet" href="src/styles/themes.css">
 
   <script type="application/ld+json">
   {
@@ -62,16 +63,12 @@
 </head>
 <body>
   <main id="app" aria-live="polite">
-    <header class="brand">
-      <h1>Rangoli Royale</h1>
-      <p class="tagline">Draw the line. Hold the grid.</p>
-    </header>
     <section class="loading" aria-busy="true">
       <p>Loading…</p>
     </section>
   </main>
 
-  <script src="js/app.js"></script>
+  <script type="module" src="src/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
