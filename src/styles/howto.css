@@ -1,0 +1,48 @@
+.howto-body {
+  background: var(--rr-bg-card);
+  border-radius: var(--rr-radius);
+  padding: var(--rr-space-4) var(--rr-space-5);
+  margin-bottom: var(--rr-space-4);
+  line-height: 1.65;
+}
+
+.howto-body h2 {
+  margin-top: var(--rr-space-5);
+  font-size: var(--rr-text-xl);
+  color: var(--rr-accent);
+}
+.howto-body h2:first-child { margin-top: 0; }
+
+.howto-body h3 {
+  margin-top: var(--rr-space-4);
+  font-size: var(--rr-text-lg);
+  color: var(--rr-text);
+}
+
+.howto-body p {
+  margin-bottom: var(--rr-space-3);
+}
+
+.howto-body ul {
+  list-style: disc inside;
+  padding-left: var(--rr-space-3);
+  margin-bottom: var(--rr-space-3);
+}
+.howto-body li {
+  margin-bottom: var(--rr-space-2);
+}
+
+.howto-body strong { color: var(--rr-accent); }
+
+.howto-body code {
+  background: var(--rr-bg-elevated);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--rr-font-mono);
+  font-size: 0.92em;
+}
+
+.loading {
+  color: var(--rr-text-muted);
+  text-align: center;
+}

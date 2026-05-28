@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rangoli-royale-v3';
+const CACHE_NAME = 'rangoli-royale-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -31,7 +31,9 @@ const ASSETS_TO_CACHE = [
   './src/styles/game.css',
   './src/styles/endgame.css',
   './src/styles/settings.css',
-  './src/styles/stats.css'
+  './src/styles/stats.css',
+  './src/styles/howto.css',
+  './docs/rules.md'
 ];
 
 self.addEventListener('install', (event) => {
