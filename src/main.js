@@ -46,6 +46,23 @@ export function navigate(hash) {
   }
 }
 
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  window.dispatchEvent(new CustomEvent('rr:install-available'));
+});
+
+export async function triggerInstall() {
+  if (!deferredInstallPrompt) return false;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  return outcome === 'accepted';
+}
+
+export const canInstall = () => deferredInstallPrompt !== null;
+
 window.addEventListener('hashchange', render);
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', render);

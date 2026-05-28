@@ -1,9 +1,12 @@
 import { getCurrentGame } from '../lib/storage.js';
+import { canInstall, triggerInstall } from '../main.js';
+
+let installListener = null;
 
 export function mount(target) {
   const hasResume = !!getCurrentGame();
 
-  target.innerHTML = `
+  const renderShell = () => target.innerHTML = `
     <header class="brand">
       <h1>Rangoli Royale</h1>
       <p class="tagline">Draw the line. Hold the grid.</p>
@@ -33,6 +36,32 @@ export function mount(target) {
       </a>
     </nav>
 
+    ${canInstall() ? `
+      <button type="button" id="install-btn" class="install-btn">
+        <span>Install app</span>
+        <span class="install-btn-meta">Add to home screen · play offline</span>
+      </button>` : ''}
+
     <p class="home-footer">v0.1.0 · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
   `;
+
+  renderShell();
+
+  const installBtn = target.querySelector('#install-btn');
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      const accepted = await triggerInstall();
+      if (accepted) renderShell();
+    });
+  }
+
+  installListener = () => renderShell();
+  window.addEventListener('rr:install-available', installListener);
+}
+
+export function unmount() {
+  if (installListener) {
+    window.removeEventListener('rr:install-available', installListener);
+    installListener = null;
+  }
 }
