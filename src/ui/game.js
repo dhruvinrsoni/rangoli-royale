@@ -1,6 +1,6 @@
 import { currentTeam, applyMove, deriveGrid, InvalidMoveError, MoveError, turnNumberForTeam, undoLastMove } from '../lib/turn-engine.js';
 import { scoreFor } from '../lib/scoring.js';
-import { getCurrentGame, saveCurrentGame, clearCurrentGame } from '../lib/storage.js';
+import { getCurrentGame, saveCurrentGame, clearCurrentGame, getSettings, updateSettings } from '../lib/storage.js';
 import { renderGridSvg } from './game-render.js';
 import { buzz } from '../features/haptic.js';
 import { isEnabled } from '../config/features.js';
@@ -104,6 +104,30 @@ export function mount(target) {
   grid = deriveGrid(state);
   root = target;
   render();
+  maybeShowTutorial();
+}
+
+function maybeShowTutorial() {
+  const settings = getSettings();
+  if (settings.tutorialSeen) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'tutorial-overlay';
+  overlay.innerHTML = `
+    <div class="tutorial-card">
+      <h2>How to play</h2>
+      <ol class="tutorial-steps">
+        <li><strong>Your team's dots</strong> are in alternating columns. Tap the line between two adjacent ones to claim it.</li>
+        <li><strong>Block your rival</strong> — a line you draw locks out any opponent line that crosses or overlaps it.</li>
+        <li><strong>Win</strong> with the longest single chain (or largest connected tree, depending on setup).</li>
+      </ol>
+      <button type="button" class="primary" id="tutorial-dismiss">Got it</button>
+    </div>
+  `;
+  root.appendChild(overlay);
+  overlay.querySelector('#tutorial-dismiss').addEventListener('click', () => {
+    updateSettings({ tutorialSeen: true });
+    overlay.remove();
+  });
 }
 
 export function unmount() {
