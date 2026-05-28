@@ -1,64 +1,128 @@
-# CLAUDE.md — project-templates
+# CLAUDE.md — rangoli-royale Project Context
 
-Meta-template repository for generating new projects with best-practice scaffolding.
+Project-specific instructions for Claude Code. Loaded automatically when working in this repo.
 
 ---
 
 ## Project
 
-A base + overlay composition system with 8 template flavors. A generator script (`scripts/init-project.mjs`) merges `base/` + `flavors/<name>/` into a new project directory with variable substitution.
-
-**Stack:** Node.js (generator) · Python (validator) · Zero external dependencies
+A 2-team strategy game on a rangoli dot grid
+**Stack:** HTML · CSS · Vanilla JavaScript · PWA
+**All data stays on device.** Zero telemetry.
 
 ---
 
 ## Critical File Map
 
+Navigate here first — don't broad-search when the location is known:
+
 | What | Where |
 |------|-------|
-| Generator script | `scripts/init-project.mjs` |
-| Validator script | `scripts/validate-templates.py` |
-| Shared base layer | `base/` |
-| All 8 flavors | `flavors/<name>/` |
-| Template registry | `registry.yaml` |
-| Base CLAUDE.md skeleton | `base/CLAUDE.md.template` |
-| Repo-maintenance skill v2.0 | `base/.github/skills/repo-maintenance/SKILL.md` |
+| Entry point | `src/` |
 
 ---
 
 ## Common Commands
 
-| Command | Purpose |
-|---------|---------|
-| `node scripts/init-project.mjs --flavor <f> --name <n>` | Generate a new project |
-| `node scripts/init-project.mjs --flavor <f> --name <n> --dry-run` | Preview generation |
-| `python scripts/validate-templates.py` | Validate all templates |
+| Command | Purpose | Speed |
+|---------|---------|-------|
+| (fill in) | (fill in) | (fill in) |
 
 ---
 
-## Architecture
+## Domain Skills (On-Demand Context)
 
-```
-base/           → shared files (all flavors get this)
-flavors/<name>/ → flavor-specific delta (overwrites/extends base)
-*.template      → files with {{VARS}} that get replaced during generation
-*.overlay       → content appended to matching base file (e.g., CLAUDE.md.overlay → CLAUDE.md)
-```
+Load `.github/skills/<name>/SKILL.md` for deep domain knowledge:
 
-### Adding a New Flavor
+| Skill | Load when... |
+|-------|-------------|
+| `repo-maintenance` | Cleanup, dead code audit, file reorganization |
 
-1. Create `flavors/<name>/` directory
-2. Add flavor-specific files (only the delta from base)
-3. Add `CLAUDE.md.overlay` for flavor-specific CLAUDE.md sections
-4. Add `<name>` to `FLAVORS` array in `scripts/init-project.mjs`
-5. Add entry to `registry.yaml`
-6. Run `python scripts/validate-templates.py` to verify
+
+---
+
+## Efficiency Rules (Repo-Adapted)
+
+### Model / Agent Selection
+
+- **Direct (no agent):** Reading 1-2 known files, single targeted search, making code edits
+- **Explore agent:** Understanding how a subsystem works, multi-file pattern discovery
+- **Plan agent:** Before implementing non-trivial changes
+
+### Discovery Strategy
+
+Prefer in this order:
+1. **Glob** for file finding
+2. **Grep `files_with_matches`** to locate which files contain a symbol before reading
+3. **Read** with `offset`+`limit` when the relevant region is known from Grep line numbers
+4. **Explore agent** only when answer spans many files or requires iteration
+
+### Parallelization
+
+Run in parallel when independent:
+- Multiple file reads (use one message with multiple Read calls)
+- Multiple Grep/Glob searches
+- Multiple Explore agents for different subsystems
+
+
 
 ---
 
 ## Key Conventions
 
-- `{{TEMPLATE_VARS}}` — uppercase, double-braces, underscores
-- `.template` suffix → stripped during generation, vars replaced
-- `.overlay` suffix → appended to matching base file, then removed
-- Skills follow agentskills-garden spec (YAML frontmatter with name + description)
+- **Commit convention** — `fix:`, `feat:`, `docs:`, `chore:`, `refactor:`, `test:` prefixes
+- **No hardcoded secrets** — use environment variables or `.env` (gitignored)
+
+
+---
+
+## Maintenance Workflows
+
+Load `.github/skills/repo-maintenance/SKILL.md` for full cleanup framework.
+
+### Bug Fix
+```
+1. Reproduce → find root cause → fix
+2. echo "No build step — test manually"
+3. git commit -m "fix: <description>"
+```
+
+### New Feature
+```
+1. Load relevant domain skill → plan → implement
+2. echo "No build step — test manually"
+3. git commit -m "feat: <description>"
+```
+
+
+
+
+---
+
+## Vanilla PWA — Flavor-Specific Notes
+
+### Architecture
+
+Zero dependencies. Pure HTML/CSS/JS. Works on `file://` and `python -m http.server`.
+
+### Service Worker
+
+- Cache-first strategy with named versioned cache (`rangoli-royale-v1`)
+- Bump cache version in `sw.js` when updating static assets
+- Test offline: DevTools → Application → Service Workers → Offline checkbox
+
+### PWA Checklist
+
+- `manifest.json` — name, icons (192 + 512), theme_color, background_color, display: standalone
+- `sw.js` — precache all CSS/JS/HTML files
+- Icons in `assets/icons/` — 192x192 and 512x512 PNG (maskable recommended)
+
+### Deployment
+
+GitHub Pages via `deploy-pages.yml` on push to main. Health check runs every 6 hours.
+
+### This Repo Specifically
+
+- Every JS module has a 1:1 CSS counterpart (e.g., `notifications.js` / `notifications.css`)
+- URL parameters supported for deep linking: `?key=value`
+- Service Worker version must match `version.txt`
