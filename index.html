@@ -1,39 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A 2-team strategy game on a rangoli dot grid">
-  <meta name="theme-color" content="#007BFF">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f59e0b" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
 
-  <title>rangoli-royale</title>
+  <title>Rangoli Royale — 2-team strategy on a dot grid</title>
+  <meta name="description" content="Rangoli Royale is a pass-the-device, 2-team strategy game on a South Asian dot grid. Draw lines, block your rival, win on longest line or largest tree. Offline-first PWA.">
 
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Rangoli Royale">
+  <meta property="og:title" content="Rangoli Royale — 2-team strategy on a dot grid">
+  <meta property="og:description" content="A pass-the-device strategy game inspired by the South Asian rangoli/kolam tradition. Two teams, one grid, one device.">
+  <meta property="og:url" content="https://dhruvinrsoni.github.io/rangoli-royale/">
+  <meta property="og:image" content="https://dhruvinrsoni.github.io/rangoli-royale/assets/icons/favicon-512.png">
+  <meta property="og:locale" content="en_IN">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Rangoli Royale — 2-team strategy on a dot grid">
+  <meta name="twitter:description" content="A pass-the-device strategy game inspired by the South Asian rangoli/kolam tradition.">
+  <meta name="twitter:image" content="https://dhruvinrsoni.github.io/rangoli-royale/assets/icons/favicon-512.png">
+
+  <link rel="canonical" href="https://dhruvinrsoni.github.io/rangoli-royale/">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="assets/icons/favicon-192.png" sizes="192x192">
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%230d1117'/><g fill='%23f59e0b'><circle cx='32' cy='12' r='4'/><circle cx='52' cy='32' r='4'/><circle cx='32' cy='52' r='4'/><circle cx='12' cy='32' r='4'/><circle cx='32' cy='32' r='5'/></g><g stroke='%23f59e0b' stroke-width='2' fill='none'><path d='M32 12 L52 32 L32 52 L12 32 Z'/></g></svg>">
   <link rel="apple-touch-icon" href="assets/icons/favicon-512.png">
 
   <link rel="stylesheet" href="css/style.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Game",
+    "name": "Rangoli Royale",
+    "description": "A 2-team strategy game on a South Asian rangoli/kolam dot grid. Pass the device, draw lines between same-color dots, block your rival.",
+    "url": "https://dhruvinrsoni.github.io/rangoli-royale/",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any (PWA)",
+    "author": {
+      "@type": "Person",
+      "name": "Dhruvin Rupesh Soni",
+      "url": "https://dhruvinrsoni.github.io/"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "gamePlatform": ["Web Browser", "Progressive Web App"],
+    "playMode": "MultiPlayer",
+    "numberOfPlayers": {
+      "@type": "QuantitativeValue",
+      "minValue": 2,
+      "maxValue": 12
+    }
+  }
+  </script>
 </head>
 <body>
-  <header>
-    <h1>rangoli-royale</h1>
-  </header>
-
-  <main id="app">
-    <!-- Your application content here -->
+  <main id="app" aria-live="polite">
+    <header class="brand">
+      <h1>Rangoli Royale</h1>
+      <p class="tagline">Draw the line. Hold the grid.</p>
+    </header>
+    <section class="loading" aria-busy="true">
+      <p>Loading…</p>
+    </section>
   </main>
-
-  <footer>
-    <p>&copy; 2026 Dhruvin Rupesh Soni</p>
-  </footer>
 
   <script src="js/app.js"></script>
   <script>
-    // Register Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js')
-        .then(reg => console.log('SW registered:', reg.scope))
-        .catch(err => console.error('SW registration failed:', err));
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
     }
   </script>
 </body>
