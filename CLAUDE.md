@@ -1,128 +1,103 @@
-# CLAUDE.md — rangoli-royale Project Context
+# CLAUDE.md — rangoli-royale
 
-Project-specific instructions for Claude Code. Loaded automatically when working in this repo.
+Project-specific instructions for Claude Code. Auto-loaded when working in this repo.
 
 ---
 
 ## Project
 
-A 2-team strategy game on a rangoli dot grid
-**Stack:** HTML · CSS · Vanilla JavaScript · PWA
-**All data stays on device.** Zero telemetry.
+A 2-team strategy game on a South Asian rangoli/kolam dot grid. v1 ships to GitHub Pages as a zero-build vanilla PWA. v2 (online multiplayer via Vercel/Supabase) is designed-for but not built — the v1 engine is a pure deterministic state machine so v2 wraps it without rewrite.
+
+**Stack:** HTML · CSS · Vanilla JS (ES modules) · SVG · PWA
+**Data stance:** All data stays on device. Zero telemetry. localStorage only.
 
 ---
 
 ## Critical File Map
 
-Navigate here first — don't broad-search when the location is known:
-
 | What | Where |
-|------|-------|
-| Entry point | `src/` |
+|---|---|
+| App entry / router | `src/main.js` |
+| Game engine (pure) | `src/lib/geometry.js`, `src/lib/turn-engine.js`, `src/lib/scoring.js` |
+| Storage abstraction | `src/lib/storage.js` (v2 will swap for Supabase) |
+| Event bus | `src/lib/events.js` |
+| Feature flags | `src/config/features.js` |
+| Difficulty presets | `src/config/difficulty.js` |
+| UI screens | `src/ui/{home,setup,game,endgame,settings,stats,howto}.js` |
+| Per-screen styles | `src/styles/<screen>.css` (1:1 with each `ui/*.js`) |
+| Design tokens | `src/styles/base.css`, `src/styles/themes.css` |
+| Add-ons (flag-gated) | `src/features/{team-names,undo-move,turn-timer,sound-fx,haptic}/` |
+| Browser engine tests | `tests.html` |
+| Service worker | `sw.js` (bump `CACHE_NAME` on asset changes) |
+| Roadmap | `C:\Users\DS3741\.claude\plans\we-need-to-continue-glistening-ladybug.md` (resumable per-phase status) |
 
 ---
 
 ## Common Commands
 
-| Command | Purpose | Speed |
-|---------|---------|-------|
-| (fill in) | (fill in) | (fill in) |
+| Command | Purpose |
+|---|---|
+| `python -m http.server 8000` | Serve locally; visit `http://localhost:8000` |
+| Open `tests.html` in browser | Run engine tests; assertions log to console |
+| `git push origin main` | Triggers deploy-pages.yml → GitHub Pages |
+| `gh workflow run create-tag-release.yml -f version=X.Y.Z` | Cut a tagged release |
+| `gh workflow run rollback.yml -f target=<sha>` | Roll deployment back |
 
 ---
 
-## Domain Skills (On-Demand Context)
+## Domain Skills
 
-Load `.github/skills/<name>/SKILL.md` for deep domain knowledge:
+Load `.github/skills/<name>/SKILL.md` on demand:
 
 | Skill | Load when... |
-|-------|-------------|
-| `repo-maintenance` | Cleanup, dead code audit, file reorganization |
-
-
----
-
-## Efficiency Rules (Repo-Adapted)
-
-### Model / Agent Selection
-
-- **Direct (no agent):** Reading 1-2 known files, single targeted search, making code edits
-- **Explore agent:** Understanding how a subsystem works, multi-file pattern discovery
-- **Plan agent:** Before implementing non-trivial changes
-
-### Discovery Strategy
-
-Prefer in this order:
-1. **Glob** for file finding
-2. **Grep `files_with_matches`** to locate which files contain a symbol before reading
-3. **Read** with `offset`+`limit` when the relevant region is known from Grep line numbers
-4. **Explore agent** only when answer spans many files or requires iteration
-
-### Parallelization
-
-Run in parallel when independent:
-- Multiple file reads (use one message with multiple Read calls)
-- Multiple Grep/Glob searches
-- Multiple Explore agents for different subsystems
-
-
+|---|---|
+| `pwa-optimization` | Service worker strategy, cache versioning, Lighthouse PWA debugging |
+| `repo-maintenance` | Cleanup, dead code audit, file reorg |
+| `systematic-debugging` | Reproduce → bisect → fix on a tricky bug |
 
 ---
 
 ## Key Conventions
 
-- **Commit convention** — `fix:`, `feat:`, `docs:`, `chore:`, `refactor:`, `test:` prefixes
-- **No hardcoded secrets** — use environment variables or `.env` (gitignored)
-
+- **Mobile-first.** Min 44px touch targets. Single column at phone width, tablet may widen the grid.
+- **No build step.** ES modules only, served as-is. No bundler, no npm dependencies.
+- **No code comments.** Naming carries intent. Only comment when *why* is non-obvious (a workaround for a specific bug, a hidden invariant).
+- **Relative paths everywhere.** Site is served at `/rangoli-royale/` on GH Pages — absolute paths break. `start_url: "."`, `scope: "."`, `./index.html` in `sw.js` ASSETS_TO_CACHE.
+- **1:1 JS/CSS pairing.** Every `src/ui/<screen>.js` has a matching `src/styles/<screen>.css`.
+- **Feature flags are render-time.** `src/config/features.js` is read at module import. Don't gate UI only at runtime — dead code shouldn't ship.
+- **Engine must be deterministic.** `applyMove(state, move)` is pure. No `Date.now()`, no `Math.random()` inside the engine (seat-randomization happens once at setup and is stored). Replays must be byte-identical — v2 depends on this.
+- **Storage keys are namespaced** under `rangoli-royale:*`.
+- **Commits:** `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `style:` prefixes. Atomic — one logical change per commit.
 
 ---
 
-## Maintenance Workflows
+## Game Mechanics (quick reference)
 
-Load `.github/skills/repo-maintenance/SKILL.md` for full cleanup framework.
+- Dots in a rectangular grid, alternating column colors (team A / team B), every other row offset by half a step (zigzag).
+- A turn = one straight line between two same-color dots of your team (horizontal or vertical, adjacent in the same-color sub-grid).
+- A horizontal line geometrically crosses a perpendicular vertical line of the opponent → blocking mechanic.
+- Win modes: `longest-line` (longest unbroken straight chain) or `largest-tree` (largest connected subgraph by node count). Chosen at setup.
+- Game ends when both teams have zero legal moves, or all edges claimed.
+
+---
+
+## Deployment
+
+GitHub Pages via Actions. Push `main` → deploy-pages.yml. Health check every 6h via deployment-status.yml. Manual versioned releases via create-tag-release.yml. Rollback via rollback.yml. See `docs/deployment.md`.
+
+---
+
+## Workflow
 
 ### Bug Fix
-```
-1. Reproduce → find root cause → fix
-2. echo "No build step — test manually"
-3. git commit -m "fix: <description>"
-```
+1. Reproduce in browser → find root cause → fix
+2. Re-run `tests.html` if engine-related
+3. `git commit -m "fix: <description>"`
 
 ### New Feature
-```
-1. Load relevant domain skill → plan → implement
-2. echo "No build step — test manually"
-3. git commit -m "feat: <description>"
-```
+1. Load relevant domain skill if applicable → implement
+2. Wire feature flag if user-facing optional behavior
+3. `git commit -m "feat(scope): <description>"`
 
-
-
-
----
-
-## Vanilla PWA — Flavor-Specific Notes
-
-### Architecture
-
-Zero dependencies. Pure HTML/CSS/JS. Works on `file://` and `python -m http.server`.
-
-### Service Worker
-
-- Cache-first strategy with named versioned cache (`rangoli-royale-v1`)
-- Bump cache version in `sw.js` when updating static assets
-- Test offline: DevTools → Application → Service Workers → Offline checkbox
-
-### PWA Checklist
-
-- `manifest.json` — name, icons (192 + 512), theme_color, background_color, display: standalone
-- `sw.js` — precache all CSS/JS/HTML files
-- Icons in `assets/icons/` — 192x192 and 512x512 PNG (maskable recommended)
-
-### Deployment
-
-GitHub Pages via `deploy-pages.yml` on push to main. Health check runs every 6 hours.
-
-### This Repo Specifically
-
-- Every JS module has a 1:1 CSS counterpart (e.g., `notifications.js` / `notifications.css`)
-- URL parameters supported for deep linking: `?key=value`
-- Service Worker version must match `version.txt`
+### Cache busting
+When you change any asset under `src/`, `css/`, `js/`, `assets/`, bump `CACHE_NAME` in `sw.js` from `rangoli-royale-vN` → `rangoli-royale-v(N+1)` and update `ASSETS_TO_CACHE` if files were added/removed.
