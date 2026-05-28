@@ -47,6 +47,7 @@ function scoreboardHtml() {
 function render() {
   if (!root) return;
   const winModeLabel = state.setup.winMode === 'tree' ? 'Largest tree' : 'Longest line';
+  const canUndo = isEnabled('undoMove') && state.moveLog.length > 0 && state.status === 'in-progress';
   root.innerHTML = `
     <header class="game-header">
       <a href="#home" class="game-back" aria-label="Back to home">← Home</a>
@@ -56,6 +57,7 @@ function render() {
     ${scoreboardHtml()}
     <section class="game-grid-host" id="game-grid-host"></section>
     <footer class="game-footer">
+      ${canUndo ? `<button type="button" id="undo-move" class="ghost">Undo last move</button>` : ''}
       <button type="button" id="end-game" class="ghost">End game</button>
     </footer>
   `;
@@ -70,6 +72,20 @@ function render() {
       location.hash = '#endgame';
     }
   });
+
+  const undoBtn = root.querySelector('#undo-move');
+  if (undoBtn) {
+    undoBtn.addEventListener('click', () => {
+      const last = state.moveLog[state.moveLog.length - 1];
+      const lastTeamName = state.setup.teams[last.team].name;
+      if (confirm(`Undo ${lastTeamName}'s last move? Both teams must agree.`)) {
+        state = undoLastMove(state);
+        saveCurrentGame(state);
+        buzz('tap');
+        render();
+      }
+    });
+  }
 
   if (state.status === 'ended') {
     location.hash = '#endgame';
