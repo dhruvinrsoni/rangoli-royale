@@ -3,8 +3,10 @@ import { claimedEdges, currentTeam } from '../lib/turn-engine.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const MARGIN = 24;
 const DOT_RADIUS = 5;
-const HIT_RADIUS = 18;
 const STROKE_WIDTH = 5;
+
+const HIT_INSET_FRAC = 0.22;
+const HIT_MAX_PERP_FRAC = 0.32;
 
 function el(name, attrs = {}, children = []) {
   const node = document.createElementNS(SVG_NS, name);
@@ -16,6 +18,39 @@ function el(name, attrs = {}, children = []) {
     node.appendChild(child);
   }
   return node;
+}
+
+function clientToSvg(svg, clientX, clientY) {
+  const pt = svg.createSVGPoint();
+  pt.x = clientX;
+  pt.y = clientY;
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return { x: clientX, y: clientY };
+  return pt.matrixTransform(ctm.inverse());
+}
+
+function findClosestActiveEdge(px, py, grid, team, claimed) {
+  if (!team) return null;
+  const maxPerp = grid.spacing * HIT_MAX_PERP_FRAC;
+  const tMin = HIT_INSET_FRAC;
+  const tMax = 1 - HIT_INSET_FRAC;
+  let best = null;
+  for (const edge of grid.legalEdges) {
+    if (edge.team !== team) continue;
+    if (claimed.has(edge.id)) continue;
+    const dx = edge.x2 - edge.x1;
+    const dy = edge.y2 - edge.y1;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) continue;
+    const t = ((px - edge.x1) * dx + (py - edge.y1) * dy) / lenSq;
+    if (t < tMin || t > tMax) continue;
+    const cx = edge.x1 + t * dx;
+    const cy = edge.y1 + t * dy;
+    const dist = Math.hypot(px - cx, py - cy);
+    if (dist > maxPerp) continue;
+    if (!best || dist < best.dist) best = { id: edge.id, dist };
+  }
+  return best;
 }
 
 export function renderGridSvg(state, grid) {
@@ -39,8 +74,8 @@ export function renderGridSvg(state, grid) {
     role: 'img',
   });
 
+  const ghostLayer = el('g', { class: 'edges-ghost' });
   const claimedLayer = el('g', { class: 'edges-claimed' });
-  const hitLayer = el('g', { class: 'edges-hit' });
   const dotsLayer = el('g', { class: 'dots' });
 
   for (const edge of grid.legalEdges) {
@@ -56,11 +91,8 @@ export function renderGridSvg(state, grid) {
         'data-edge': edge.id,
         'data-anim': claim.moveIndex === state.moveLog.length - 1 ? 'just-claimed' : null,
       }));
-    } else {
-      const isActive = edge.team === activeTeam;
-      if (!isActive) continue;
-
-      const ghost = el('line', {
+    } else if (edge.team === activeTeam) {
+      ghostLayer.appendChild(el('line', {
         x1: edge.x1, y1: edge.y1, x2: edge.x2, y2: edge.y2,
         stroke: teams[edge.team].color,
         'stroke-width': 2,
@@ -68,19 +100,7 @@ export function renderGridSvg(state, grid) {
         class: 'edge-ghost is-active',
         'data-edge': edge.id,
         opacity: 0.25,
-      });
-      hitLayer.appendChild(ghost);
-
-      const hit = el('line', {
-        x1: edge.x1, y1: edge.y1, x2: edge.x2, y2: edge.y2,
-        stroke: 'transparent',
-        'stroke-width': HIT_RADIUS * 2,
-        'stroke-linecap': 'round',
-        class: 'edge-hit is-active',
-        'data-edge': edge.id,
-        'data-team': edge.team,
-      });
-      hitLayer.appendChild(hit);
+      }));
     }
   }
 
@@ -93,17 +113,16 @@ export function renderGridSvg(state, grid) {
     }));
   }
 
-  svg.appendChild(hitLayer);
+  svg.appendChild(ghostLayer);
   svg.appendChild(claimedLayer);
   svg.appendChild(dotsLayer);
 
-  svg.addEventListener('pointerdown', async (e) => {
-    const hit = e.target.closest('.edge-hit');
-    if (!hit) return;
-    e.preventDefault();
-    const edgeId = hit.dataset.edge;
+  svg.addEventListener('click', async (e) => {
+    const { x, y } = clientToSvg(svg, e.clientX, e.clientY);
+    const closest = findClosestActiveEdge(x, y, grid, activeTeam, claimed);
+    if (!closest) return;
     const gameMod = await import('./game.js');
-    gameMod._handleEdgeTap(edgeId);
+    gameMod._handleEdgeTap(closest.id);
   });
 
   return svg;
