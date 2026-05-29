@@ -6,6 +6,9 @@ const ROUTES = Object.freeze({
   '#settings': () => import('./ui/settings.js'),
   '#stats': () => import('./ui/stats.js'),
   '#howto': () => import('./ui/howto.js'),
+  '#room-create': () => import('./ui/room-create.js'),
+  '#join': () => import('./ui/room-join.js'),
+  '#lobby': () => import('./ui/lobby.js'),
 });
 
 const DEFAULT_ROUTE = '#home';
@@ -15,7 +18,8 @@ async function render() {
   const target = document.getElementById('app');
   if (!target) return;
 
-  const route = ROUTES[location.hash] ? location.hash : DEFAULT_ROUTE;
+  const rawHash = location.hash.split('?')[0] || '';
+  const route = ROUTES[rawHash] ? rawHash : DEFAULT_ROUTE;
   const loader = ROUTES[route];
 
   if (currentScreen?.unmount) {

@@ -5,10 +5,12 @@ import { renderGridSvg } from './game-render.js';
 import { buzz } from '../features/haptic.js';
 import { playMoveBlip, playInvalidBuzz } from '../features/sound-fx.js';
 import { isEnabled } from '../config/features.js';
+import { isActive as onlineActive, isMyTurn, getMyTeam, getSession, onUpdate as onOnlineUpdate, submitMoveOnline, leaveRoom as leaveOnlineRoom } from '../lib/online-session.js';
 
 let state = null;
 let grid = null;
 let root = null;
+let unsubOnline = null;
 
 function teamMeta(team) {
   return state.setup.teams[team];
@@ -19,10 +21,11 @@ function bannerHtml() {
   if (team === null) return `<div class="turn-banner">Game over</div>`;
   const meta = teamMeta(team);
   const turnNum = turnNumberForTeam(state, team);
+  const youLabel = onlineActive() ? (team === getMyTeam() ? ' · your turn' : ' · waiting') : ' · pass the device';
   return `
     <div class="turn-banner" style="--turn-color:${meta.color}">
       <span class="turn-team">${meta.name}</span>
-      <span class="turn-meta">Move #${turnNum} · pass the device</span>
+      <span class="turn-meta">Move #${turnNum}${youLabel}</span>
     </div>
   `;
 }
@@ -58,25 +61,33 @@ function render() {
   }
 
   const winModeLabel = state.setup.winMode === 'tree' ? 'Largest tree' : 'Longest line';
-  const canUndo = isEnabled('undoMove') && state.moveLog.length > 0 && state.status === 'in-progress';
+  const canUndo = !onlineActive() && isEnabled('undoMove') && state.moveLog.length > 0 && state.status === 'in-progress';
+  const isOnline = onlineActive();
   root.innerHTML = `
     <header class="game-header">
       <a href="#home" class="game-back" aria-label="Back to home">← Home</a>
-      <span class="game-mode">${winModeLabel}</span>
+      <span class="game-mode">${winModeLabel}${isOnline ? ' · online' : ''}</span>
     </header>
     ${bannerHtml()}
     ${scoreboardHtml()}
     <section class="game-grid-host" id="game-grid-host"></section>
     <footer class="game-footer">
       ${canUndo ? `<button type="button" id="undo-move" class="ghost">Undo last move</button>` : ''}
-      <button type="button" id="end-game" class="ghost">End game</button>
+      <button type="button" id="end-game" class="ghost">${isOnline ? 'Leave room' : 'End game'}</button>
     </footer>
   `;
 
   const host = root.querySelector('#game-grid-host');
   host.appendChild(renderGridSvg(state, grid));
 
-  root.querySelector('#end-game').addEventListener('click', () => {
+  root.querySelector('#end-game').addEventListener('click', async () => {
+    if (isOnline) {
+      if (!confirm('Leave the online room?')) return;
+      await leaveOnlineRoom();
+      clearCurrentGame();
+      location.hash = '#home';
+      return;
+    }
     if (confirm('End this game and see the result?')) {
       state = { ...state, status: 'ended' };
       saveCurrentGame(state);
@@ -112,6 +123,27 @@ export function mount(target) {
   root = target;
   render();
   maybeShowTutorial();
+
+  if (onlineActive()) {
+    unsubOnline = onOnlineUpdate((evt) => {
+      if (evt.kind === 'state') {
+        const session = getSession();
+        if (!session) return;
+        state = {
+          setup: session.state.setup,
+          moveLog: session.state.moveLog,
+          status: session.state.status,
+        };
+        saveCurrentGame(state);
+        grid = deriveGrid(state);
+        render();
+      } else if (evt.kind === 'room-gone') {
+        alert('Room has ended.');
+        clearCurrentGame();
+        location.hash = '#home';
+      }
+    });
+  }
 }
 
 function maybeShowTutorial() {
@@ -138,12 +170,27 @@ function maybeShowTutorial() {
 }
 
 export function unmount() {
+  if (unsubOnline) { unsubOnline(); unsubOnline = null; }
   root = null;
   state = null;
   grid = null;
 }
 
-export function _handleEdgeTap(edgeId) {
+export async function _handleEdgeTap(edgeId) {
+  if (onlineActive()) {
+    if (!isMyTurn()) {
+      flashError('not-your-turn');
+      return;
+    }
+    try {
+      buzz('tap');
+      playMoveBlip();
+      await submitMoveOnline(edgeId);
+    } catch (err) {
+      flashError(err.code || 'NETWORK', err.message);
+    }
+    return;
+  }
   try {
     state = applyMove(state, edgeId);
     saveCurrentGame(state);
@@ -159,7 +206,7 @@ export function _handleEdgeTap(edgeId) {
   }
 }
 
-function flashError(code) {
+function flashError(code, customMsg) {
   const host = root?.querySelector('#game-grid-host');
   if (!host) return;
   host.classList.remove('shake');
@@ -167,12 +214,17 @@ function flashError(code) {
   host.classList.add('shake');
   buzz('invalid');
   playInvalidBuzz();
-  const msg = ({
+  const msg = customMsg || ({
     [MoveError.WRONG_TEAM]: 'Not your team\'s edge',
     [MoveError.ALREADY_CLAIMED]: 'Already drawn',
     [MoveError.BLOCKED_BY_CROSSING]: 'Blocked — crosses an opponent line',
     [MoveError.UNKNOWN_EDGE]: 'Tap closer to a line',
     [MoveError.GAME_ENDED]: 'Game is already over',
+    'not-your-turn': 'Wait for your turn',
+    'CONFLICT': 'Opponent moved — refreshing',
+    'WRONG_TEAM': 'Not your team\'s turn',
+    'INVALID_MOVE': 'Invalid move',
+    'NETWORK': 'Connection problem',
   })[code] || 'Invalid move';
   const toast = document.createElement('div');
   toast.className = 'toast';
