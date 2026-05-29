@@ -1,7 +1,9 @@
 function parseEdgeId(id) {
   const parts = id.split('-');
+  const prefix = parts[0];
   return {
-    orientation: parts[0] === 'v' ? 'vertical' : 'horizontal',
+    orientation: prefix[0] === 'v' ? 'vertical' : 'horizontal',
+    team: prefix[1],
     col: parseInt(parts[1], 10),
     row: parseInt(parts[2], 10),
   };
@@ -24,11 +26,11 @@ function longestRun(values, step) {
 }
 
 function dotsOfEdge(edgeId) {
-  const { orientation, col, row } = parseEdgeId(edgeId);
+  const { orientation, team, col, row } = parseEdgeId(edgeId);
   if (orientation === 'vertical') {
-    return [`d-${col}-${row}`, `d-${col}-${row + 1}`];
+    return [`d${team}-${col}-${row}`, `d${team}-${col}-${row + 1}`];
   }
-  return [`d-${col}-${row}`, `d-${col + 2}-${row}`];
+  return [`d${team}-${col}-${row}`, `d${team}-${col + 1}-${row}`];
 }
 
 class UnionFind {
@@ -126,7 +128,7 @@ export function longestLine(state, team) {
     if (run > longest) longest = run;
   }
   for (const cols of horizontalsByRow.values()) {
-    const run = longestRun(cols, 2);
+    const run = longestRun(cols, 1);
     if (run > longest) longest = run;
   }
   return longest;
