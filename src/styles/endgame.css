@@ -3,6 +3,22 @@
   margin-bottom: var(--rr-space-1);
 }
 
+.endgame-board {
+  padding: var(--rr-space-3);
+  background: var(--rr-bg-card);
+  border-radius: var(--rr-radius);
+  margin-bottom: var(--rr-space-4);
+  text-align: center;
+}
+.endgame-board .final-grid {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 360px;
+  max-height: 45vh;
+  margin: 0 auto;
+}
+
 .endgame-card {
   display: grid;
   grid-template-columns: 1fr;
