@@ -12,7 +12,7 @@ const SHAPE_FILTERS = Object.freeze({
   hexagon: (x, y, cx, cy, half) => {
     const dx = Math.abs(x - cx);
     const dy = Math.abs(y - cy);
-    return dx + dy <= half && dy <= half * 0.75;
+    return dx + dy * 0.6 <= half;
   },
 });
 

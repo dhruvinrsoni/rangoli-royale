@@ -183,7 +183,7 @@
   border-radius: 50%;
 }
 .shape-preview.shape-hexagon {
-  clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
 }
 .shape-label {
   font-size: var(--rr-text-xs);
