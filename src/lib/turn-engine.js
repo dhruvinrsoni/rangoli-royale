@@ -18,7 +18,7 @@ export class InvalidMoveError extends Error {
 
 const otherTeam = t => (t === 'A' ? 'B' : 'A');
 
-export function createGame({ rows, cols, spacing = 40, playerCount, winMode, teams, startingTeam }) {
+export function createGame({ rows, cols, spacing = 40, playerCount, winMode, teams, startingTeam, shape = 'rectangle' }) {
   if (!Number.isInteger(playerCount) || playerCount < 2 || playerCount % 2 !== 0) {
     throw new Error(`playerCount must be an even integer >= 2, got ${playerCount}`);
   }
@@ -38,6 +38,7 @@ export function createGame({ rows, cols, spacing = 40, playerCount, winMode, tea
       winMode,
       teams: { A: { ...teams.A }, B: { ...teams.B } },
       startingTeam: resolvedStartingTeam,
+      shape,
       createdAt: Date.now(),
     },
     moveLog: [],
@@ -50,6 +51,7 @@ export function deriveGrid(state) {
     rows: state.setup.rows,
     cols: state.setup.cols,
     spacing: state.setup.spacing,
+    shape: state.setup.shape || 'rectangle',
   });
 }
 
