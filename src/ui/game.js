@@ -3,6 +3,7 @@ import { scoreFor } from '../lib/scoring.js';
 import { getCurrentGame, saveCurrentGame, clearCurrentGame, getSettings, updateSettings } from '../lib/storage.js';
 import { renderGridSvg } from './game-render.js';
 import { buzz } from '../features/haptic.js';
+import { playMoveBlip, playInvalidBuzz } from '../features/sound-fx.js';
 import { isEnabled } from '../config/features.js';
 
 let state = null;
@@ -147,6 +148,7 @@ export function _handleEdgeTap(edgeId) {
     state = applyMove(state, edgeId);
     saveCurrentGame(state);
     buzz('tap');
+    playMoveBlip();
     render();
   } catch (err) {
     if (err instanceof InvalidMoveError) {
@@ -164,6 +166,7 @@ function flashError(code) {
   void host.offsetWidth;
   host.classList.add('shake');
   buzz('invalid');
+  playInvalidBuzz();
   const msg = ({
     [MoveError.WRONG_TEAM]: 'Not your team\'s edge',
     [MoveError.ALREADY_CLAIMED]: 'Already drawn',
