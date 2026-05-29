@@ -6,6 +6,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.1.8] — 2026-05-29
+
+### Changed
+- `createGame` now requires explicit `startingTeam` ('A' or 'B') — Math.random() removed from engine. Engine is now provably pure: same setup + same move log → identical state on every client. This is the determinism contract v2 multiplayer depends on.
+- `src/ui/setup.js` now picks the random starting team at form-submit time and passes it into `createGame`.
+
+### Added
+- `src/lib/sync-adapter.js` — pluggable session adapter seam. Local adapter is the default; online adapter (Vercel + Postgres) will slot in for v2 without touching UI code.
+
 ## [0.1.7] — 2026-05-29
 
 ### Added

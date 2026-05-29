@@ -1,1 +1,1 @@
-v0.1.7 · 2026-05-29 17:05:00 IST · Preferences (haptic + sound) toggleable in settings
+v0.1.8 · 2026-05-29 17:30:00 IST · Engine purity (startingTeam required) + sync-adapter seam for v2
