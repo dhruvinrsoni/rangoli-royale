@@ -1,4 +1,6 @@
 import { getSettings, updateSettings, clearCurrentGame, clearHistory, fullReset, exportAll, importAll } from '../lib/storage.js';
+import { getPref, setPref } from '../lib/preferences.js';
+import { isEnabled } from '../config/features.js';
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
@@ -25,6 +27,28 @@ export function mount(target) {
     </section>
 
     <section class="settings-section">
+      <h2>Preferences</h2>
+      <div class="pref-list">
+        ${isEnabled('hapticFeedback') ? `
+          <label class="pref-row">
+            <span class="pref-label">
+              <span class="pref-name">Haptic feedback</span>
+              <span class="pref-meta">Short buzz on every move</span>
+            </span>
+            <input type="checkbox" data-pref="haptic" ${getPref('haptic') ? 'checked' : ''}>
+          </label>` : ''}
+        ${isEnabled('soundFx') ? `
+          <label class="pref-row">
+            <span class="pref-label">
+              <span class="pref-name">Sound effects</span>
+              <span class="pref-meta">Tone on each move + invalid buzz</span>
+            </span>
+            <input type="checkbox" data-pref="soundFx" ${getPref('soundFx') ? 'checked' : ''}>
+          </label>` : ''}
+      </div>
+    </section>
+
+    <section class="settings-section">
       <h2>Reset</h2>
       <button type="button" id="reset-current" class="danger-line">Discard current game</button>
       <button type="button" id="reset-history" class="danger-line">Clear game history</button>
@@ -42,6 +66,12 @@ export function mount(target) {
 
     <a href="#home" class="settings-back">← Home</a>
   `;
+
+  target.querySelectorAll('input[data-pref]').forEach(input => {
+    input.addEventListener('change', () => {
+      setPref(input.dataset.pref, input.checked);
+    });
+  });
 
   target.querySelectorAll('.theme-btn').forEach(btn => {
     btn.addEventListener('click', () => {

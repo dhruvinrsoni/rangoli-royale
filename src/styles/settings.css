@@ -55,6 +55,41 @@
   min-height: var(--rr-tap);
 }
 
+.pref-list {
+  display: grid;
+  gap: var(--rr-space-2);
+}
+.pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rr-space-3);
+  padding: var(--rr-space-3);
+  background: var(--rr-bg-elevated);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--rr-radius-sm);
+  cursor: pointer;
+  min-height: var(--rr-tap);
+}
+.pref-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pref-name {
+  font-weight: 600;
+}
+.pref-meta {
+  font-size: var(--rr-text-sm);
+  color: var(--rr-text-muted);
+}
+.pref-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--rr-accent);
+  cursor: pointer;
+}
+
 .settings-back {
   display: inline-block;
   margin-top: var(--rr-space-4);
