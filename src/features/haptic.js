@@ -1,4 +1,4 @@
-import { isEnabled } from '../config/features.js';
+import { getPref } from '../lib/preferences.js';
 
 const PATTERNS = Object.freeze({
   tap: 10,
@@ -8,7 +8,7 @@ const PATTERNS = Object.freeze({
 });
 
 export function buzz(pattern = 'tap') {
-  if (!isEnabled('hapticFeedback')) return;
+  if (!getPref('haptic')) return;
   if (typeof navigator === 'undefined' || !navigator.vibrate) return;
   try {
     navigator.vibrate(PATTERNS[pattern] ?? pattern);

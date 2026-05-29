@@ -1,4 +1,4 @@
-import { isEnabled } from '../config/features.js';
+import { getPref } from '../lib/preferences.js';
 
 let audioCtx = null;
 
@@ -26,16 +26,16 @@ function blip({ frequency, durationMs, type = 'sine', gain = 0.06 }) {
 }
 
 export function playMoveBlip() {
-  if (!isEnabled('soundFx')) return;
+  if (!getPref('soundFx')) return;
   blip({ frequency: 660, durationMs: 90, type: 'triangle' });
 }
 
 export function playTurnEndChime() {
-  if (!isEnabled('soundFx')) return;
+  if (!getPref('soundFx')) return;
   blip({ frequency: 880, durationMs: 140, type: 'sine' });
 }
 
 export function playInvalidBuzz() {
-  if (!isEnabled('soundFx')) return;
+  if (!getPref('soundFx')) return;
   blip({ frequency: 180, durationMs: 200, type: 'square', gain: 0.04 });
 }
