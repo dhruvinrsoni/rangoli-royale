@@ -3,6 +3,16 @@
   margin-bottom: var(--rr-space-1);
 }
 
+.end-reason {
+  margin: var(--rr-space-2) 0 0;
+  padding: var(--rr-space-2) var(--rr-space-3);
+  background: rgba(245, 158, 11, 0.1);
+  border-left: 3px solid var(--rr-accent);
+  border-radius: var(--rr-radius-sm);
+  font-size: var(--rr-text-sm);
+  color: var(--rr-text);
+}
+
 .endgame-board {
   padding: var(--rr-space-3);
   background: var(--rr-bg-card);

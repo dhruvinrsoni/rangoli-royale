@@ -2,6 +2,7 @@ import { getCurrentGame, clearCurrentGame, saveSetup, appendHistory, getHistory 
 import { determineWinner, longestLine, largestTree, dotsCovered } from '../lib/scoring.js';
 import { deriveGrid } from '../lib/turn-engine.js';
 import { buildFinalGridSvg, buildResultCardPng } from './result-card.js';
+import { isActive as onlineActive, getSession, leaveRoom as leaveOnlineRoom } from '../lib/online-session.js';
 
 let recorded = false;
 
@@ -33,7 +34,21 @@ function recordHistory(state, result) {
 
 export function mount(target) {
   recorded = false;
-  const state = getCurrentGame();
+  let state = getCurrentGame();
+  let endReason = null;
+
+  if (onlineActive()) {
+    const session = getSession();
+    if (session?.state) {
+      state = {
+        setup: session.state.setup,
+        moveLog: session.state.moveLog,
+        status: session.state.status,
+      };
+      endReason = session.state.endReason || null;
+    }
+  }
+
   if (!state) {
     target.innerHTML = `
       <header class="brand"><h1>Nothing to show</h1></header>
@@ -54,11 +69,13 @@ export function mount(target) {
     ? 'var(--rr-accent)'
     : state.setup.teams[result.winner].color;
   const modeLabel = state.setup.winMode === 'tree' ? 'Largest tree' : 'Longest line';
+  const isOnline = onlineActive();
 
   target.innerHTML = `
     <header class="brand">
       <h1 class="endgame-headline" style="color:${winnerColor}">${winnerLabel}</h1>
       <p class="tagline">${modeLabel} · ${state.moveLog.length} moves</p>
+      ${endReason ? `<p class="end-reason">${endReason}</p>` : ''}
     </header>
 
     <section class="endgame-board" aria-label="Final board">
@@ -79,14 +96,21 @@ export function mount(target) {
     </section>
 
     <div class="endgame-actions">
-      <button type="button" id="replay" class="primary">Play again</button>
-      <button type="button" id="save-image">Save image</button>
+      ${!isOnline ? `<button type="button" id="replay" class="primary">Play again</button>` : ''}
+      <button type="button" id="save-image" class="${isOnline ? 'primary' : ''}">Save image</button>
       <button type="button" id="share">Share text</button>
+      ${isOnline ? `<button type="button" id="leave-online" class="ghost">Leave room</button>` : ''}
       <a href="#home" class="ghost-link">Home</a>
     </div>
   `;
 
-  target.querySelector('#replay').addEventListener('click', () => {
+  target.querySelector('#leave-online')?.addEventListener('click', async () => {
+    await leaveOnlineRoom();
+    clearCurrentGame();
+    location.hash = '#home';
+  });
+
+  target.querySelector('#replay')?.addEventListener('click', () => {
     saveSetup({
       playerCount: state.setup.playerCount,
       teamAName: a.name,
