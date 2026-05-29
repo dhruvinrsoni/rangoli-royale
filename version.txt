@@ -1,1 +1,1 @@
-v0.1.6 · 2026-05-29 16:42:00 IST · PWA PNG icons (192/512 + maskable) for installability
+v0.1.7 · 2026-05-29 17:05:00 IST · Preferences (haptic + sound) toggleable in settings
