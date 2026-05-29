@@ -1,1 +1,1 @@
-v0.2.2 · 2026-05-29 19:30:00 IST · Stop SVG pulsing + adaptive polling + leave-mid-game ends with reason
+v0.2.3 · 2026-05-30 09:00:00 IST · Long-poll (sub-second lag) + hover glow + turn-tinted board + Give up + auto-play single move + skip-turn banner

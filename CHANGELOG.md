@@ -6,6 +6,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.2.3] — 2026-05-30
+
+### Fixed
+- **Sub-second online latency.** Switched from interval-polling to **HTTP long-polling**. Server holds the GET request for up to 7s, returns the moment state changes. Worst-case lag is now ~700ms (server's inner poll interval), average ~350ms.
+- **Background tab uses 30s polling** instead of full long-polling — tab-throttling on most browsers would block long-polls anyway. When the tab becomes visible again, an immediate refresh is triggered.
+
+### Added
+- **Edge hover glow + cursor pointer** — when a mouse hovers near a legal edge, that edge brightens with a soft glow. Cursor switches to pointer on the board when it's your turn.
+- **Subtle board tint by current team** — the game board's border and shadow take on the active team's color (~35% tint). Quiet visual feedback for who's up.
+- **Give Up button** — explicit forfeit. Confirm → game ends with `endReason: "<name> gave up"` → endgame screen with current scores intact. Works local and online.
+- **Skipped-turn announcement** — when a team has no legal moves and the engine skips them, the banner shows "Opponent had no moves — plays again" and a 2-second toast fires on first occurrence per skip.
+- **Auto-play when only one legal move remains** — board pulses the single option for 1 second, then the engine plays it automatically. Saves a mechanical tap; player can still tap manually within the second.
+
+### Backend
+- `GET /api/<code>?wait=1&since=<key>` long-poll mode. Inner DB poll every 700ms, 7s budget.
+- `POST /api/<code>/give-up` — forfeits the game with reason.
+- `computeStateKey` shared between server and client to avoid drift.
+
+### Changed
+- Cache → v17
+
 ## [0.2.2] — 2026-05-29
 
 ### Fixed
