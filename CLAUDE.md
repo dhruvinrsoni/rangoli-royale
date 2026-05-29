@@ -37,8 +37,9 @@ A 2-team strategy game on a South Asian rangoli/kolam dot grid. v1 ships to GitH
 
 | Command | Purpose |
 |---|---|
-| `python -m http.server 8000` | Serve locally; visit `http://localhost:8000` |
-| Open `tests.html` in browser | Run engine tests; assertions log to console |
+| `npm run dev` | Serve locally (Python under the hood); visit `http://localhost:8765` |
+| `npm run dev:node` | Alternative Node-based server (uses `npx serve`) |
+| Open `http://localhost:8765/tests.html` | Run engine tests; assertions on the page |
 | `git push origin main` | Triggers deploy-pages.yml → GitHub Pages |
 | `gh workflow run create-tag-release.yml -f version=X.Y.Z` | Cut a tagged release |
 | `gh workflow run rollback.yml -f target=<sha>` | Roll deployment back |

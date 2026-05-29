@@ -1,0 +1,19 @@
+{
+  "name": "rangoli-royale",
+  "version": "0.1.1",
+  "private": true,
+  "description": "A 2-team strategy game on a rangoli dot grid — pass-around PWA",
+  "homepage": "https://dhruvinrsoni.github.io/rangoli-royale/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dhruvinrsoni/rangoli-royale.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Dhruvin Rupesh Soni",
+  "scripts": {
+    "dev": "python -m http.server 8765",
+    "dev:node": "npx --yes serve@latest . -p 8765",
+    "test": "echo \"Open http://localhost:8765/tests.html in a browser (after npm run dev)\"",
+    "open": "echo \"App: http://localhost:8765/   Tests: http://localhost:8765/tests.html\""
+  }
+}

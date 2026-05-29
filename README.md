@@ -32,15 +32,23 @@ The game ends when neither team has a legal move, or when every legal edge is cl
 
 ## Run locally
 
-No build step. Any static server works.
+No build step. Pick whichever server you have handy:
 
 ```bash
-cd rangoli-royale
-python -m http.server 8000
-# then visit http://localhost:8000
+# 1. npm script (uses Python under the hood — Python ships with most dev setups)
+npm run dev
+# → http://localhost:8765
+
+# 2. or Node-based static server (downloads `serve` via npx on first run)
+npm run dev:node
+
+# 3. or run Python directly without npm
+python -m http.server 8765
 ```
 
-Or open `index.html` directly in a browser (service worker registration may be skipped on `file://`).
+Then in another tab, open the engine tests at http://localhost:8765/tests.html to verify the pure engine on your machine.
+
+Opening `index.html` directly in a browser also works for quick checks, but service worker registration is skipped on `file://`.
 
 ---
 
