@@ -1,5 +1,5 @@
 import { claimedEdges } from '../lib/turn-engine.js';
-import { longestLine, largestTree } from '../lib/scoring.js';
+import { longestLine, largestTree, dotsCovered } from '../lib/scoring.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PAD = 24;
@@ -62,6 +62,8 @@ export function buildResultCardSvg(state, grid, result) {
   const bLine = longestLine(state, 'B');
   const aTree = largestTree(state, 'A');
   const bTree = largestTree(state, 'B');
+  const aDots = dotsCovered(state, 'A');
+  const bDots = dotsCovered(state, 'B');
 
   const innerVB = `${b.minX - PAD} ${b.minY - PAD} ${gridContentW} ${gridContentH}`;
   const rowAY = TITLE_H + gridRenderH + 64;
@@ -75,10 +77,10 @@ export function buildResultCardSvg(state, grid, result) {
   <line x1="${PAD}" y1="${TITLE_H + gridRenderH + 24}" x2="${CARD_W - PAD}" y2="${TITLE_H + gridRenderH + 24}" stroke="#2a313c"/>
   <text x="${PAD}" y="${rowAY}" font-family='${FONT}' font-size="22" font-weight="600" fill="${teams.A.color}">${esc(teams.A.name)}</text>
   <text x="${CARD_W - PAD}" y="${rowAY}" text-anchor="end" font-family='${FONT}' font-size="34" font-weight="700" fill="${teams.A.color}">${result.scores.A}</text>
-  <text x="${PAD}" y="${rowAY + 24}" font-family='${FONT}' font-size="13" fill="#8b949e">Longest line ${aLine} · Largest tree ${aTree}</text>
+  <text x="${PAD}" y="${rowAY + 24}" font-family='${FONT}' font-size="13" fill="#8b949e">${aDots} dots covered · Longest line ${aLine} · Largest tree ${aTree}</text>
   <text x="${PAD}" y="${rowBY}" font-family='${FONT}' font-size="22" font-weight="600" fill="${teams.B.color}">${esc(teams.B.name)}</text>
   <text x="${CARD_W - PAD}" y="${rowBY}" text-anchor="end" font-family='${FONT}' font-size="34" font-weight="700" fill="${teams.B.color}">${result.scores.B}</text>
-  <text x="${PAD}" y="${rowBY + 24}" font-family='${FONT}' font-size="13" fill="#8b949e">Longest line ${bLine} · Largest tree ${bTree}</text>
+  <text x="${PAD}" y="${rowBY + 24}" font-family='${FONT}' font-size="13" fill="#8b949e">${bDots} dots covered · Longest line ${bLine} · Largest tree ${bTree}</text>
   <text x="${CARD_W / 2}" y="${cardH - 20}" text-anchor="middle" font-family='${FONT}' font-size="12" fill="#58a6ff">dhruvinrsoni.github.io/rangoli-royale · ${date}</text>
 </svg>`;
 }

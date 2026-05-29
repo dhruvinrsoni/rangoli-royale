@@ -1,5 +1,5 @@
 import { getCurrentGame, clearCurrentGame, saveSetup, appendHistory, getHistory } from '../lib/storage.js';
-import { determineWinner, longestLine, largestTree } from '../lib/scoring.js';
+import { determineWinner, longestLine, largestTree, dotsCovered } from '../lib/scoring.js';
 import { deriveGrid } from '../lib/turn-engine.js';
 import { buildFinalGridSvg, buildResultCardPng } from './result-card.js';
 
@@ -16,6 +16,7 @@ function recordHistory(state, result) {
     teams: state.setup.teams,
     rows: state.setup.rows,
     cols: state.setup.cols,
+    shape: state.setup.shape || 'rectangle',
     winMode: state.setup.winMode,
     playerCount: state.setup.playerCount,
     moves: state.moveLog.length,
@@ -25,6 +26,8 @@ function recordHistory(state, result) {
     longestLineB: longestLine(state, 'B'),
     treeA: largestTree(state, 'A'),
     treeB: largestTree(state, 'B'),
+    dotsA: dotsCovered(state, 'A'),
+    dotsB: dotsCovered(state, 'B'),
   });
 }
 
@@ -66,12 +69,12 @@ export function mount(target) {
       <div class="endgame-team" style="--team-color:${a.color}">
         <span class="endgame-team-name">${a.name}</span>
         <span class="endgame-team-score">${result.scores.A}</span>
-        <span class="endgame-team-sub">${longestLine(state, 'A')} longest · ${largestTree(state, 'A')} in tree</span>
+        <span class="endgame-team-sub">${dotsCovered(state, 'A')} dots · ${longestLine(state, 'A')} longest · ${largestTree(state, 'A')} in tree</span>
       </div>
       <div class="endgame-team" style="--team-color:${b.color}">
         <span class="endgame-team-name">${b.name}</span>
         <span class="endgame-team-score">${result.scores.B}</span>
-        <span class="endgame-team-sub">${longestLine(state, 'B')} longest · ${largestTree(state, 'B')} in tree</span>
+        <span class="endgame-team-sub">${dotsCovered(state, 'B')} dots · ${longestLine(state, 'B')} longest · ${largestTree(state, 'B')} in tree</span>
       </div>
     </section>
 
