@@ -4,7 +4,7 @@ export const FEATURES = Object.freeze({
   undoMove: true,
 
   turnTimer: false,
-  soundFx: false,
+  soundFx: true,
 
   colorFillBossMode: false,
   socialShare: false,
