@@ -18,7 +18,7 @@ export class InvalidMoveError extends Error {
 
 const otherTeam = t => (t === 'A' ? 'B' : 'A');
 
-export function createGame({ rows, cols, spacing = 40, playerCount, winMode, teams, startingTeam, shape = 'rectangle' }) {
+export function createGame({ rows, cols, spacing = 40, playerCount, winMode, teams, startingTeam, shape = 'rectangle', createdAt }) {
   if (!Number.isInteger(playerCount) || playerCount < 2 || playerCount % 2 !== 0) {
     throw new Error(`playerCount must be an even integer >= 2, got ${playerCount}`);
   }
@@ -28,7 +28,9 @@ export function createGame({ rows, cols, spacing = 40, playerCount, winMode, tea
   if (!teams || !teams.A || !teams.B) {
     throw new Error('teams.A and teams.B are required');
   }
-  const resolvedStartingTeam = startingTeam || (Math.random() < 0.5 ? 'A' : 'B');
+  if (startingTeam !== 'A' && startingTeam !== 'B') {
+    throw new Error(`startingTeam must be 'A' or 'B', got ${startingTeam}`);
+  }
   return {
     setup: {
       rows,
@@ -37,9 +39,9 @@ export function createGame({ rows, cols, spacing = 40, playerCount, winMode, tea
       playerCount,
       winMode,
       teams: { A: { ...teams.A }, B: { ...teams.B } },
-      startingTeam: resolvedStartingTeam,
+      startingTeam,
       shape,
-      createdAt: Date.now(),
+      createdAt: createdAt ?? Date.now(),
     },
     moveLog: [],
     status: 'in-progress',

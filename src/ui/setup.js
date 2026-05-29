@@ -194,6 +194,7 @@ export function mount(target) {
         playerCount: state.playerCount,
         winMode: state.winMode,
         shape: state.shape,
+        startingTeam: Math.random() < 0.5 ? 'A' : 'B',
         teams: {
           A: { name: state.teamAName, color: state.teamAColor },
           B: { name: state.teamBName, color: state.teamBColor },
