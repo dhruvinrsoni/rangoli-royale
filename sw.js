@@ -1,9 +1,14 @@
-const CACHE_NAME = 'rangoli-royale-v10';
+const CACHE_NAME = 'rangoli-royale-v11';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './assets/icons/icon.svg',
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png',
+  './assets/icons/icon-192-maskable.png',
+  './assets/icons/icon-512-maskable.png',
+  './assets/icons/apple-touch-icon.png',
   './src/main.js',
   './src/lib/events.js',
   './src/lib/geometry.js',
