@@ -1,1 +1,1 @@
-v0.1.5 · 2026-05-29 10:34:02 IST · Longest path scoring + clearer hexagon
+v0.1.6 · 2026-05-29 16:42:00 IST · PWA PNG icons (192/512 + maskable) for installability

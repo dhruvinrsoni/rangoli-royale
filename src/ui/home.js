@@ -42,7 +42,7 @@ export function mount(target) {
         <span class="install-btn-meta">Add to home screen · play offline</span>
       </button>` : ''}
 
-    <p class="home-footer">v0.1.0 · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
+    <p class="home-footer">v0.1.6 · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
   `;
 
   renderShell();
