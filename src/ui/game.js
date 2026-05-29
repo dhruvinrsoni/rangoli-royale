@@ -46,6 +46,16 @@ function scoreboardHtml() {
 
 function render() {
   if (!root) return;
+
+  if (state.status === 'in-progress' && currentTeam(state, grid) === null) {
+    state = { ...state, status: 'ended' };
+    saveCurrentGame(state);
+  }
+  if (state.status === 'ended') {
+    location.hash = '#endgame';
+    return;
+  }
+
   const winModeLabel = state.setup.winMode === 'tree' ? 'Largest tree' : 'Longest line';
   const canUndo = isEnabled('undoMove') && state.moveLog.length > 0 && state.status === 'in-progress';
   root.innerHTML = `
@@ -85,10 +95,6 @@ function render() {
         render();
       }
     });
-  }
-
-  if (state.status === 'ended') {
-    location.hash = '#endgame';
   }
 }
 
