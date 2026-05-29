@@ -1,14 +1,39 @@
 export const TEAMS = Object.freeze(['A', 'B']);
 
-export function generateGrid({ rows, cols, spacing = 40 }) {
+const SHAPE_FILTERS = Object.freeze({
+  rectangle: () => true,
+  diamond: (x, y, cx, cy, half) =>
+    Math.abs(x - cx) + Math.abs(y - cy) <= half,
+  circle: (x, y, cx, cy, half) => {
+    const dx = x - cx;
+    const dy = y - cy;
+    return dx * dx + dy * dy <= half * half;
+  },
+  hexagon: (x, y, cx, cy, half) => {
+    const dx = Math.abs(x - cx);
+    const dy = Math.abs(y - cy);
+    return dx + dy <= half && dy <= half * 0.75;
+  },
+});
+
+export const SHAPES = Object.freeze(Object.keys(SHAPE_FILTERS));
+
+export function generateGrid({ rows, cols, spacing = 40, shape = 'rectangle' }) {
   if (!Number.isInteger(rows) || !Number.isInteger(cols) || rows < 2 || cols < 2) {
     throw new Error(`Grid requires integer rows >= 2 and cols >= 2, got rows=${rows} cols=${cols}`);
   }
+
+  const filter = SHAPE_FILTERS[shape] || SHAPE_FILTERS.rectangle;
+  const cx = (cols - 1) / 2;
+  const cy = (rows - 1) / 2;
+  const half = Math.min(rows, cols) / 2;
+  const includesPoint = (x, y) => filter(x, y, cx, cy, half);
 
   const dots = [];
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
+      if (!includesPoint(col, row)) continue;
       dots.push({
         id: `dA-${col}-${row}`,
         team: 'A',
@@ -22,6 +47,7 @@ export function generateGrid({ rows, cols, spacing = 40 }) {
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
+      if (!includesPoint(col + 0.5, row + 0.5)) continue;
       dots.push({
         id: `dB-${col}-${row}`,
         team: 'B',
@@ -43,6 +69,7 @@ export function generateGrid({ rows, cols, spacing = 40 }) {
       for (let col = 0; col + 1 < cols; col++) {
         const a = dotAt(team, col, row);
         const b = dotAt(team, col + 1, row);
+        if (!a || !b) continue;
         legalEdges.push({
           id: `h${team}-${col}-${row}`,
           a: a.id,
@@ -57,6 +84,7 @@ export function generateGrid({ rows, cols, spacing = 40 }) {
       for (let row = 0; row + 1 < rows; row++) {
         const a = dotAt(team, col, row);
         const b = dotAt(team, col, row + 1);
+        if (!a || !b) continue;
         legalEdges.push({
           id: `v${team}-${col}-${row}`,
           a: a.id,
@@ -85,15 +113,22 @@ export function generateGrid({ rows, cols, spacing = 40 }) {
     }
   }
 
-  const minX = 0;
-  const minY = 0;
-  const maxX = (cols - 1 + 0.5) * spacing;
-  const maxY = (rows - 1 + 0.5) * spacing;
+  let minX = 0, minY = 0, maxX = 0, maxY = 0;
+  if (dots.length > 0) {
+    minX = Infinity; minY = Infinity; maxX = -Infinity; maxY = -Infinity;
+    for (const d of dots) {
+      if (d.x < minX) minX = d.x;
+      if (d.y < minY) minY = d.y;
+      if (d.x > maxX) maxX = d.x;
+      if (d.y > maxY) maxY = d.y;
+    }
+  }
 
   return {
     rows,
     cols,
     spacing,
+    shape,
     bounds: { minX, minY, maxX, maxY },
     dots,
     legalEdges,
