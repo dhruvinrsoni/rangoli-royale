@@ -1,37 +1,64 @@
 import { getClientId } from '../config/online.js';
 
-const POLL_FAST_MS = 2500;
-const POLL_SLOW_MS = 6000;
+const POLL_FAST_MS = 2000;
+const POLL_SLOW_MS = 5000;
+const SESSION_KEY = 'rangoli-royale:online-session';
+const NAME_KEY = 'rangoli-royale:online-name';
 
 let session = null;
 let pollTimer = null;
 let listeners = new Set();
-let lastMoveCount = -1;
 
-function notify(state) {
+function notify(evt) {
   for (const fn of listeners) {
-    try { fn(state); } catch (err) { console.error('[online]', err); }
+    try { fn(evt); } catch (err) { console.error('[online]', err); }
   }
+}
+
+function persist() {
+  try {
+    if (!session) {
+      localStorage.removeItem(SESSION_KEY);
+      return;
+    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      code: session.code,
+      clientId: session.clientId,
+      mySeat: session.mySeat,
+      name: session.name,
+      lastState: session.state,
+      ts: Date.now(),
+    }));
+  } catch {}
+}
+
+export function rememberName(name) {
+  try { localStorage.setItem(NAME_KEY, name); } catch {}
+}
+
+export function getRememberedName() {
+  try { return localStorage.getItem(NAME_KEY) || ''; } catch { return ''; }
 }
 
 async function pollOnce() {
   if (!session) return;
-  const url = `/api/${encodeURIComponent(session.code)}?since=${lastMoveCount}`;
+  const url = `/api/${encodeURIComponent(session.code)}`;
   try {
-    const resp = await fetch(url);
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (resp.status === 404) {
+      const code = session.code;
+      stop();
+      notify({ kind: 'room-gone', code });
+      return;
+    }
     if (!resp.ok) {
-      if (resp.status === 404) {
-        stop();
-        notify({ kind: 'room-gone' });
-      }
+      notify({ kind: 'network-error', status: resp.status });
       return;
     }
     const json = await resp.json();
-    if (json.hasUpdate || lastMoveCount === -1) {
-      session.state = json.state;
-      lastMoveCount = json.state.moveLog?.length ?? 0;
-      notify({ kind: 'state', state: json.state });
-    }
+    session.state = json.state;
+    persist();
+    notify({ kind: 'state', state: json.state });
   } catch (err) {
     notify({ kind: 'network-error', error: err });
   }
@@ -61,9 +88,14 @@ export function onUpdate(fn) {
   return () => listeners.delete(fn);
 }
 
+export async function refresh() {
+  await pollOnce();
+}
+
 async function api(path, opts = {}) {
   const resp = await fetch(path, {
     method: opts.method || 'POST',
+    cache: 'no-store',
     headers: { 'Content-Type': 'application/json' },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
@@ -80,8 +112,9 @@ async function api(path, opts = {}) {
 export async function createRoom(setup, hostName) {
   const clientId = getClientId();
   const json = await api('/api/create', { body: { setup, hostName, clientId } });
-  session = { code: json.code, clientId, state: json.state, mySeat: 1 };
-  lastMoveCount = json.state.moveLog?.length ?? 0;
+  session = { code: json.code, clientId, state: json.state, mySeat: 1, name: hostName };
+  rememberName(hostName);
+  persist();
   schedule();
   return session;
 }
@@ -89,8 +122,9 @@ export async function createRoom(setup, hostName) {
 export async function joinRoom(code, name) {
   const clientId = getClientId();
   const json = await api(`/api/${encodeURIComponent(code)}/join`, { body: { clientId, name } });
-  session = { code, clientId, state: json.state, mySeat: json.seat };
-  lastMoveCount = json.state.moveLog?.length ?? 0;
+  session = { code: code.toUpperCase(), clientId, state: json.state, mySeat: json.seat, name };
+  rememberName(name);
+  persist();
   schedule();
   return session;
 }
@@ -99,19 +133,19 @@ export async function startRoom() {
   if (!session) throw new Error('No session');
   const json = await api(`/api/${encodeURIComponent(session.code)}/start`, { body: { clientId: session.clientId } });
   session.state = json.state;
-  lastMoveCount = json.state.moveLog?.length ?? 0;
+  persist();
   notify({ kind: 'state', state: json.state });
   return json.state;
 }
 
 export async function submitMoveOnline(edgeId) {
   if (!session) throw new Error('No session');
-  const expectedMoves = session.state.moveLog?.length ?? 0;
+  const expectedMoves = session.state?.moveLog?.length ?? 0;
   const json = await api(`/api/${encodeURIComponent(session.code)}/move`, {
     body: { clientId: session.clientId, edgeId, expectedMoves },
   });
   session.state = json.state;
-  lastMoveCount = json.state.moveLog?.length ?? 0;
+  persist();
   notify({ kind: 'state', state: json.state });
   return json.state;
 }
@@ -130,7 +164,27 @@ export function stop() {
   clearTimeout(pollTimer);
   pollTimer = null;
   session = null;
-  lastMoveCount = -1;
+  persist();
+}
+
+export function restoreSessionSync() {
+  if (session) return session;
+  let stored = null;
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (raw) stored = JSON.parse(raw);
+  } catch {}
+  if (!stored?.code || !stored?.clientId) return null;
+  session = {
+    code: stored.code,
+    clientId: stored.clientId,
+    mySeat: stored.mySeat ?? null,
+    name: stored.name || '',
+    state: stored.lastState || null,
+  };
+  schedule();
+  pollOnce();
+  return session;
 }
 
 export function getMyTeam() {

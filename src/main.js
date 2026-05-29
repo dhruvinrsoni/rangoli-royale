@@ -67,9 +67,28 @@ export async function triggerInstall() {
 
 export const canInstall = () => deferredInstallPrompt !== null;
 
+import { restoreSessionSync } from './lib/online-session.js';
+
+function boot() {
+  const restored = restoreSessionSync();
+  if (restored?.state) {
+    const hash = location.hash || '';
+    const isHome = hash === '' || hash === '#home' || hash === '#';
+    if (isHome) {
+      const status = restored.state.status;
+      const target = status === 'lobby' ? '#lobby' : status === 'in-progress' ? '#game' : status === 'ended' ? '#endgame' : null;
+      if (target) {
+        location.hash = target;
+        return;
+      }
+    }
+  }
+  render();
+}
+
 window.addEventListener('hashchange', render);
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', render);
+  document.addEventListener('DOMContentLoaded', boot);
 } else {
-  render();
+  boot();
 }

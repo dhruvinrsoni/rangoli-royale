@@ -12,11 +12,6 @@ export default async function handler(req, res) {
     const rows = await q`SELECT state FROM rooms WHERE code = ${code} AND expires_at > now()`;
     if (rows.length === 0) throw new RoomError('ROOM_NOT_FOUND', 'Room expired or not found');
 
-    const since = parseInt(req.query?.since ?? '-1', 10);
-    const state = rows[0].state;
-    const movesNow = state.moveLog?.length ?? 0;
-    const hasUpdate = Number.isFinite(since) ? movesNow !== since : true;
-
-    ok(res, { state, hasUpdate });
+    ok(res, { state: rows[0].state });
   });
 }
