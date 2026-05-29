@@ -1,31 +1,59 @@
-import { currentTeam, applyMove, deriveGrid, InvalidMoveError, MoveError, turnNumberForTeam, undoLastMove } from '../lib/turn-engine.js';
+import { currentTeam, applyMove, deriveGrid, InvalidMoveError, MoveError, turnNumberForTeam, undoLastMove, legalMovesFor } from '../lib/turn-engine.js';
 import { scoreFor } from '../lib/scoring.js';
 import { getCurrentGame, saveCurrentGame, clearCurrentGame, getSettings, updateSettings } from '../lib/storage.js';
 import { renderGridSvg } from './game-render.js';
 import { buzz } from '../features/haptic.js';
 import { playMoveBlip, playInvalidBuzz } from '../features/sound-fx.js';
 import { isEnabled } from '../config/features.js';
-import { isActive as onlineActive, isMyTurn, getMyTeam, getSession, onUpdate as onOnlineUpdate, submitMoveOnline, leaveRoom as leaveOnlineRoom, refresh as refreshOnline } from '../lib/online-session.js';
+import { isActive as onlineActive, isMyTurn, getMyTeam, getSession, onUpdate as onOnlineUpdate, submitMoveOnline, leaveRoom as leaveOnlineRoom, refresh as refreshOnline, giveUpOnline } from '../lib/online-session.js';
+
+const AUTO_PLAY_DELAY_MS = 1000;
 
 let state = null;
 let grid = null;
 let root = null;
 let unsubOnline = null;
+let lastRenderKey = null;
+let lastSkipNoticeTurn = -1;
+let autoPlayTimer = null;
 
 function teamMeta(team) {
   return state.setup.teams[team];
 }
 
-function bannerHtml() {
+function clearAutoPlay() {
+  if (autoPlayTimer) {
+    clearTimeout(autoPlayTimer);
+    autoPlayTimer = null;
+  }
+}
+
+function renderKey() {
+  if (!state) return 'null';
+  const team = currentTeam(state, grid);
+  return [
+    state.moveLog.length,
+    state.status,
+    team ?? '',
+    onlineActive() ? '1' : '0',
+  ].join('|');
+}
+
+function bannerHtml(currentTeamName) {
   const team = currentTeam(state, grid);
   if (team === null) return `<div class="turn-banner">Game over</div>`;
   const meta = teamMeta(team);
   const turnNum = turnNumberForTeam(state, team);
-  const youLabel = onlineActive() ? (team === getMyTeam() ? ' · your turn' : ' · waiting') : ' · pass the device';
+  const lastMove = state.moveLog[state.moveLog.length - 1];
+  const skipped = lastMove && lastMove.team === team;
+  const youLabel = onlineActive()
+    ? (team === getMyTeam() ? '· your turn' : '· waiting')
+    : '· pass the device';
   return `
     <div class="turn-banner" style="--turn-color:${meta.color}">
       <span class="turn-team">${meta.name}</span>
-      <span class="turn-meta">Move #${turnNum}${youLabel}</span>
+      <span class="turn-meta">Move #${turnNum} ${youLabel}</span>
+      ${skipped ? `<span class="turn-skip">Opponent had no moves — plays again</span>` : ''}
     </div>
   `;
 }
@@ -48,6 +76,46 @@ function scoreboardHtml() {
   `;
 }
 
+function maybeFireSkipToast() {
+  const team = currentTeam(state, grid);
+  if (!team) return;
+  const lastMove = state.moveLog[state.moveLog.length - 1];
+  if (!lastMove || lastMove.team !== team) return;
+  if (lastSkipNoticeTurn === state.moveLog.length) return;
+  lastSkipNoticeTurn = state.moveLog.length;
+  const skippedTeam = team === 'A' ? 'B' : 'A';
+  const skippedName = state.setup.teams[skippedTeam].name;
+  showToast(`${skippedName} had no legal moves — turn skipped`);
+}
+
+function showToast(text) {
+  if (!root) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-info';
+  toast.textContent = text;
+  root.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+function scheduleAutoPlayIfOnlyOne() {
+  clearAutoPlay();
+  if (state.status !== 'in-progress') return;
+  const team = currentTeam(state, grid);
+  if (!team) return;
+  if (onlineActive() && team !== getMyTeam()) return;
+  const legal = legalMovesFor(state, team, grid);
+  if (legal.length !== 1) return;
+  const onlyEdge = legal[0];
+  const ghostEl = root.querySelector(`.edges-ghost [data-edge="${onlyEdge}"]`);
+  if (ghostEl) ghostEl.classList.add('is-only-option');
+  autoPlayTimer = setTimeout(() => {
+    autoPlayTimer = null;
+    if (state?.status === 'in-progress' && currentTeam(state, grid) === team) {
+      _handleEdgeTap(onlyEdge);
+    }
+  }, AUTO_PLAY_DELAY_MS);
+}
+
 function render() {
   if (!root) return;
 
@@ -56,13 +124,25 @@ function render() {
     saveCurrentGame(state);
   }
   if (state.status === 'ended') {
+    clearAutoPlay();
     location.hash = '#endgame';
     return;
   }
 
+  const key = renderKey();
+  if (key === lastRenderKey) return;
+  lastRenderKey = key;
+
+  clearAutoPlay();
+
+  const team = currentTeam(state, grid);
+  const teamMetaObj = team ? teamMeta(team) : null;
   const winModeLabel = state.setup.winMode === 'tree' ? 'Largest tree' : 'Longest line';
   const canUndo = !onlineActive() && isEnabled('undoMove') && state.moveLog.length > 0 && state.status === 'in-progress';
   const isOnline = onlineActive();
+  const gridHostStyle = teamMetaObj ? `style="--turn-color:${teamMetaObj.color}"` : '';
+  const turnTeamAttr = team ? `data-turn-team="${team}"` : '';
+
   root.innerHTML = `
     <header class="game-header">
       <a href="#home" class="game-back" aria-label="Back to home">← Home</a>
@@ -70,9 +150,10 @@ function render() {
     </header>
     ${bannerHtml()}
     ${scoreboardHtml()}
-    <section class="game-grid-host" id="game-grid-host"></section>
+    <section class="game-grid-host" id="game-grid-host" ${turnTeamAttr} ${gridHostStyle}></section>
     <footer class="game-footer">
-      ${canUndo ? `<button type="button" id="undo-move" class="ghost">Undo last move</button>` : ''}
+      ${canUndo ? `<button type="button" id="undo-move" class="ghost">Undo</button>` : ''}
+      <button type="button" id="give-up" class="ghost danger-line">Give up</button>
       ${isOnline ? `<button type="button" id="refresh" class="ghost">↻ Refresh</button>` : ''}
       <button type="button" id="end-game" class="ghost">${isOnline ? 'Leave room' : 'End game'}</button>
     </footer>
@@ -84,13 +165,32 @@ function render() {
   root.querySelector('#end-game').addEventListener('click', async () => {
     if (isOnline) {
       if (!confirm('Leave the online room?')) return;
+      clearAutoPlay();
       await leaveOnlineRoom();
       clearCurrentGame();
       location.hash = '#home';
       return;
     }
     if (confirm('End this game and see the result?')) {
+      clearAutoPlay();
       state = { ...state, status: 'ended' };
+      saveCurrentGame(state);
+      location.hash = '#endgame';
+    }
+  });
+
+  root.querySelector('#give-up')?.addEventListener('click', async () => {
+    const team = currentTeam(state, grid);
+    const giverName = onlineActive()
+      ? (getSession()?.state?.players?.find(p => p.clientId === getSession().clientId)?.name || 'You')
+      : (team ? state.setup.teams[team].name : 'You');
+    if (!confirm(`Give up? Current scores stand and the game ends.`)) return;
+    clearAutoPlay();
+    if (onlineActive()) {
+      try { await giveUpOnline(); }
+      catch (err) { showToast(err.message || 'Could not give up'); return; }
+    } else {
+      state = { ...state, status: 'ended', endReason: `${giverName} gave up` };
       saveCurrentGame(state);
       location.hash = '#endgame';
     }
@@ -109,13 +209,18 @@ function render() {
       const last = state.moveLog[state.moveLog.length - 1];
       const lastTeamName = state.setup.teams[last.team].name;
       if (confirm(`Undo ${lastTeamName}'s last move? Both teams must agree.`)) {
+        clearAutoPlay();
         state = undoLastMove(state);
         saveCurrentGame(state);
         buzz('tap');
+        lastRenderKey = null;
         render();
       }
     });
   }
+
+  maybeFireSkipToast();
+  scheduleAutoPlayIfOnlyOne();
 }
 
 export function mount(target) {
@@ -143,6 +248,8 @@ export function mount(target) {
   }
   grid = deriveGrid(state);
   root = target;
+  lastRenderKey = null;
+  lastSkipNoticeTurn = -1;
   render();
   maybeShowTutorial();
 
@@ -160,6 +267,7 @@ export function mount(target) {
         grid = deriveGrid(state);
         render();
       } else if (evt.kind === 'room-gone') {
+        clearAutoPlay();
         alert('Room has ended.');
         clearCurrentGame();
         location.hash = '#home';
@@ -192,10 +300,12 @@ function maybeShowTutorial() {
 }
 
 export function unmount() {
+  clearAutoPlay();
   if (unsubOnline) { unsubOnline(); unsubOnline = null; }
   root = null;
   state = null;
   grid = null;
+  lastRenderKey = null;
 }
 
 export async function _handleEdgeTap(edgeId) {
@@ -218,6 +328,7 @@ export async function _handleEdgeTap(edgeId) {
     saveCurrentGame(state);
     buzz('tap');
     playMoveBlip();
+    lastRenderKey = null;
     render();
   } catch (err) {
     if (err instanceof InvalidMoveError) {
