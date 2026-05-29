@@ -9,22 +9,6 @@ function parseEdgeId(id) {
   };
 }
 
-function longestRun(values, step) {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  let longest = 1;
-  let current = 1;
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i] === sorted[i - 1] + step) {
-      current++;
-      if (current > longest) longest = current;
-    } else {
-      current = 1;
-    }
-  }
-  return longest;
-}
-
 function dotsOfEdge(edgeId) {
   const { orientation, team, col, row } = parseEdgeId(edgeId);
   if (orientation === 'vertical') {
@@ -116,31 +100,113 @@ export function determineWinner(state) {
   return { winner: 'tie', scores: { A: a, B: b } };
 }
 
-export function longestLine(state, team) {
-  const teamEdgeIds = state.moveLog.filter(m => m.team === team).map(m => m.edgeId);
-  if (teamEdgeIds.length === 0) return 0;
+function buildTeamGraph(state, team) {
+  const graph = new Map();
+  for (const m of state.moveLog) {
+    if (m.team !== team) continue;
+    const [a, b] = dotsOfEdge(m.edgeId);
+    if (!graph.has(a)) graph.set(a, new Set());
+    if (!graph.has(b)) graph.set(b, new Set());
+    graph.get(a).add(b);
+    graph.get(b).add(a);
+  }
+  return graph;
+}
 
-  const verticalsByCol = new Map();
-  const horizontalsByRow = new Map();
-  for (const id of teamEdgeIds) {
-    const { orientation, col, row } = parseEdgeId(id);
-    if (orientation === 'vertical') {
-      if (!verticalsByCol.has(col)) verticalsByCol.set(col, []);
-      verticalsByCol.get(col).push(row);
-    } else {
-      if (!horizontalsByRow.has(row)) horizontalsByRow.set(row, []);
-      horizontalsByRow.get(row).push(col);
+function getConnectedComponents(graph) {
+  const visited = new Set();
+  const components = [];
+  for (const start of graph.keys()) {
+    if (visited.has(start)) continue;
+    const component = new Set();
+    const stack = [start];
+    while (stack.length > 0) {
+      const node = stack.pop();
+      if (visited.has(node)) continue;
+      visited.add(node);
+      component.add(node);
+      for (const neighbor of graph.get(node)) {
+        if (!visited.has(neighbor)) stack.push(neighbor);
+      }
+    }
+    components.push(component);
+  }
+  return components;
+}
+
+function countComponentEdges(graph, component) {
+  let edges = 0;
+  for (const node of component) {
+    for (const neighbor of graph.get(node)) {
+      if (component.has(neighbor)) edges++;
     }
   }
+  return edges / 2;
+}
 
-  let longest = 0;
-  for (const rows of verticalsByCol.values()) {
-    const run = longestRun(rows, 1);
-    if (run > longest) longest = run;
+function bfsFarthest(graph, start, component) {
+  const dist = new Map();
+  dist.set(start, 0);
+  const queue = [start];
+  let farthest = { node: start, dist: 0 };
+  while (queue.length > 0) {
+    const node = queue.shift();
+    const d = dist.get(node);
+    for (const neighbor of graph.get(node)) {
+      if (!component.has(neighbor)) continue;
+      if (dist.has(neighbor)) continue;
+      const nd = d + 1;
+      dist.set(neighbor, nd);
+      if (nd > farthest.dist) farthest = { node: neighbor, dist: nd };
+      queue.push(neighbor);
+    }
   }
-  for (const cols of horizontalsByRow.values()) {
-    const run = longestRun(cols, 1);
-    if (run > longest) longest = run;
+  return farthest;
+}
+
+function treeDiameterDots(graph, component) {
+  const start = component.values().next().value;
+  const far1 = bfsFarthest(graph, start, component);
+  const far2 = bfsFarthest(graph, far1.node, component);
+  return far2.dist + 1;
+}
+
+const DFS_OP_CAP = 200000;
+
+function longestPathDots(graph, component) {
+  let best = 1;
+  let ops = 0;
+  const visited = new Set();
+  function dfs(node, length) {
+    if (ops >= DFS_OP_CAP) return;
+    ops++;
+    if (length > best) best = length;
+    visited.add(node);
+    for (const neighbor of graph.get(node)) {
+      if (!component.has(neighbor)) continue;
+      if (!visited.has(neighbor)) dfs(neighbor, length + 1);
+    }
+    visited.delete(node);
   }
-  return longest;
+  for (const start of component) {
+    if (ops >= DFS_OP_CAP) break;
+    dfs(start, 1);
+  }
+  return best;
+}
+
+export function longestLine(state, team) {
+  const graph = buildTeamGraph(state, team);
+  if (graph.size === 0) return 0;
+
+  let best = 1;
+  for (const component of getConnectedComponents(graph)) {
+    const nNodes = component.size;
+    const nEdges = countComponentEdges(graph, component);
+    const pathLen = nEdges === nNodes - 1
+      ? treeDiameterDots(graph, component)
+      : longestPathDots(graph, component);
+    if (pathLen > best) best = pathLen;
+  }
+  return best;
 }
