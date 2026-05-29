@@ -93,6 +93,17 @@ export function largestTree(state, team) {
   return uf.largestSize();
 }
 
+export function dotsCovered(state, team) {
+  const dots = new Set();
+  for (const m of state.moveLog) {
+    if (m.team !== team) continue;
+    const [a, b] = dotsOfEdge(m.edgeId);
+    dots.add(a);
+    dots.add(b);
+  }
+  return dots.size;
+}
+
 export function scoreFor(state, team) {
   return state.setup.winMode === 'tree' ? largestTree(state, team) : longestLine(state, team);
 }
