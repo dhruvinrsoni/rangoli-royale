@@ -1,6 +1,6 @@
 {
   "name": "rangoli-royale",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "A 2-team strategy game on a rangoli dot grid — pass-around PWA",
@@ -16,5 +16,8 @@
     "dev:node": "npx --yes serve@latest . -p 8765",
     "test": "echo \"Open http://localhost:8765/tests.html in a browser (after npm run dev)\"",
     "open": "echo \"App: http://localhost:8765/   Tests: http://localhost:8765/tests.html\""
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.5"
   }
 }
