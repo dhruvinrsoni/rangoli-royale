@@ -31,7 +31,21 @@ function remove(key) {
 export const getSetup = () => read(KEYS.setup);
 export const saveSetup = (setup) => write(KEYS.setup, setup);
 
-export const getCurrentGame = () => read(KEYS.currentGame);
+const LEGACY_EDGE_ID = /^[hv]-\d+-\d+$/;
+
+function isLegacyGame(state) {
+  if (!state || !Array.isArray(state.moveLog)) return false;
+  return state.moveLog.some(m => m && typeof m.edgeId === 'string' && LEGACY_EDGE_ID.test(m.edgeId));
+}
+
+export const getCurrentGame = () => {
+  const state = read(KEYS.currentGame);
+  if (isLegacyGame(state)) {
+    remove(KEYS.currentGame);
+    return null;
+  }
+  return state;
+};
 export const saveCurrentGame = (state) => write(KEYS.currentGame, state);
 export const clearCurrentGame = () => remove(KEYS.currentGame);
 
