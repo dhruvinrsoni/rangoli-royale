@@ -106,7 +106,7 @@
     let s2 = makeGame();
     assertThrows(() => applyMove(s2, 'vB-0-0'), MoveError.WRONG_TEAM, 'A cannot play B edge');
     assertThrows(() => applyMove(s2, 'nonexistent'), MoveError.UNKNOWN_EDGE, 'unknown edge id rejected');
-    const s2b = applyMove(s2, 'vA-0-0');
+    const s2b = applyMove(applyMove(s2, 'vA-0-0'), 'vB-0-0');
     assertThrows(() => applyMove(s2b, 'vA-0-0'), MoveError.ALREADY_CLAIMED, 'cannot claim same edge twice');
 
     section('Turn engine — crossing blocks opponent');
