@@ -2,7 +2,7 @@
 
 > Draw the line. Hold the grid.
 
-A two-team strategy game on a South Asian rangoli/kolam dot grid. Pass the device. Take turns. Block your rival.
+A two-team strategy game on an Indian rangoli/kolam dot grid. Pass the device. Take turns. Block your rival.
 
 **Live:** https://dhruvinrsoni.github.io/rangoli-royale/
 

@@ -70,4 +70,4 @@ Both teams' scores are computed under the chosen win mode. The higher score wins
 
 ## Cultural note
 
-Rangoli (also called kolam, alpana, muggu, pookalam — names vary by region) is a South Asian tradition of decorating thresholds and courtyards with patterns drawn over a grid of dots. The grid is the canvas. This game turns the canvas into a contest, with two sub-grids interlocking the way two rangolis would when they meet at a shared boundary.
+Rangoli (also called kolam, alpana, muggu, pookalam — names vary by region) is an Indian tradition of decorating thresholds and courtyards with patterns drawn over a grid of dots. The grid is the canvas. This game turns the canvas into a contest, with two sub-grids interlocking the way two rangolis would when they meet at a shared boundary.

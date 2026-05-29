@@ -6,7 +6,7 @@ Project-specific instructions for Claude Code. Auto-loaded when working in this 
 
 ## Project
 
-A 2-team strategy game on a South Asian rangoli/kolam dot grid. v1 ships to GitHub Pages as a zero-build vanilla PWA. v2 (online multiplayer via Vercel/Supabase) is designed-for but not built — the v1 engine is a pure deterministic state machine so v2 wraps it without rewrite.
+A 2-team strategy game on an Indian rangoli/kolam dot grid. v1 ships to GitHub Pages as a zero-build vanilla PWA. v2 (online multiplayer via Vercel/Supabase) is designed-for but not built — the v1 engine is a pure deterministic state machine so v2 wraps it without rewrite.
 
 **Stack:** HTML · CSS · Vanilla JS (ES modules) · SVG · PWA
 **Data stance:** All data stays on device. Zero telemetry. localStorage only.
