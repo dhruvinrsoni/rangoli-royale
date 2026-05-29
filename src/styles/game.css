@@ -106,10 +106,12 @@
 }
 
 .dot {
+  pointer-events: none;
   transition: r var(--rr-transition);
 }
 
 .edge {
+  pointer-events: none;
   transition: opacity var(--rr-transition);
 }
 .edge[data-anim="just-claimed"] {
@@ -122,6 +124,7 @@
 
 .edge-ghost { pointer-events: none; }
 .edge-hit {
+  pointer-events: stroke;
   cursor: pointer;
 }
 .edge-hit.is-inactive {
