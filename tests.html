@@ -21,7 +21,7 @@
   <pre id="output"></pre>
 
   <script type="module">
-    import { generateGrid, edgesIntersect } from './src/lib/geometry.js';
+    import { generateGrid, edgesIntersect, SHAPES } from './src/lib/geometry.js';
     import { createGame, applyMove, currentTeam, legalMovesFor, undoLastMove, InvalidMoveError, MoveError } from './src/lib/turn-engine.js';
     import { longestLine, largestTree, scoreFor, determineWinner } from './src/lib/scoring.js';
 
@@ -140,6 +140,26 @@
     const s4tree = { ...s4, setup: { ...s4.setup, winMode: 'tree' } };
     assertEq(scoreFor(s4tree, 'A'), 4, 'tree mode uses dot count');
     assertEq(determineWinner(s4tree).winner, 'A', 'A also wins on tree count');
+
+    section('Shape filters');
+    assertEq(SHAPES.length, 4, 'four shapes available');
+    assertTrue(SHAPES.includes('rectangle'), 'rectangle available');
+    assertTrue(SHAPES.includes('diamond'), 'diamond available');
+    assertTrue(SHAPES.includes('circle'), 'circle available');
+    assertTrue(SHAPES.includes('hexagon'), 'hexagon available');
+
+    const rect6 = generateGrid({ rows: 6, cols: 6, spacing: 40, shape: 'rectangle' });
+    const diamond6 = generateGrid({ rows: 6, cols: 6, spacing: 40, shape: 'diamond' });
+    const circle6 = generateGrid({ rows: 6, cols: 6, spacing: 40, shape: 'circle' });
+    const hex6 = generateGrid({ rows: 6, cols: 6, spacing: 40, shape: 'hexagon' });
+
+    assertEq(rect6.dots.length, 72, '6x6 rectangle: 72 dots (36 A + 36 B)');
+    assertTrue(diamond6.dots.length < rect6.dots.length, 'diamond strictly fewer dots than rectangle');
+    assertTrue(circle6.dots.length < rect6.dots.length, 'circle strictly fewer dots than rectangle');
+    assertTrue(hex6.dots.length < rect6.dots.length, 'hexagon strictly fewer dots than rectangle');
+    assertTrue(diamond6.legalEdges.length < rect6.legalEdges.length, 'diamond fewer edges (boundary dots dropped)');
+    assertEq(diamond6.shape, 'diamond', 'grid carries its shape name');
+    assertEq(generateGrid({ rows: 4, cols: 4, spacing: 40 }).shape, 'rectangle', 'default shape is rectangle');
 
     section('Undo');
     const before = s4.moveLog.length;

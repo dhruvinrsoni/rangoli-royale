@@ -1,1 +1,1 @@
-v0.1.2 · 2026-05-29 08:20:06 IST · Final-board view + downloadable result card
+v0.1.3 · 2026-05-29 09:52:44 IST · Board shapes — rectangle / diamond / circle / hexagon
