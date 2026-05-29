@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rangoli-royale-v13';
+const CACHE_NAME = 'rangoli-royale-v14';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -17,6 +17,8 @@ const ASSETS_TO_CACHE = [
   './src/lib/storage.js',
   './src/lib/preferences.js',
   './src/lib/sync-adapter.js',
+  './src/lib/online-session.js',
+  './src/config/online.js',
   './src/config/features.js',
   './src/config/difficulty.js',
   './src/config/color-presets.js',
@@ -29,6 +31,9 @@ const ASSETS_TO_CACHE = [
   './src/ui/stats.js',
   './src/ui/howto.js',
   './src/ui/result-card.js',
+  './src/ui/room-create.js',
+  './src/ui/room-join.js',
+  './src/ui/lobby.js',
   './src/features/haptic.js',
   './src/features/turn-timer.js',
   './src/features/sound-fx.js',
@@ -41,6 +46,7 @@ const ASSETS_TO_CACHE = [
   './src/styles/settings.css',
   './src/styles/stats.css',
   './src/styles/howto.css',
+  './src/styles/room.css',
   './docs/rules.md'
 ];
 
@@ -64,6 +70,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/api/')) {
+    return;
+  }
   event.respondWith(
     caches.match(event.request)
       .then(cached => cached || fetch(event.request)

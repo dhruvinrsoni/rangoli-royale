@@ -1,1 +1,1 @@
-v0.1.8 · 2026-05-29 17:30:00 IST · Engine purity (startingTeam required) + sync-adapter seam for v2
+v0.2.0 · 2026-05-29 18:30:00 IST · Online multiplayer (Vercel + Neon Postgres) with auto-fallback to local

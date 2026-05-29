@@ -6,6 +6,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-29
+
+### Added
+- **Online multiplayer** — create a room, share an 8-character code, friends join from any device
+- `api/` serverless functions: `health`, `create`, `[code]` (GET), `[code]/join`, `[code]/start`, `[code]/move`, `[code]/leave`
+- Neon Postgres backing store (`rooms` table, JSONB state, indexed `expires_at` for cheap sweeps)
+- Configurable concurrent-room cap via `MAX_ROOMS` env var (default 10) — set in Vercel dashboard, no code change needed to raise/lower
+- 8-character base36 room codes (excludes confusing chars 0/O/1/I)
+- Polling-based state sync (2.5s active, 6s idle) — no WebSocket infra
+- `src/lib/online-session.js` — session manager with polling, optimistic state mirror, callback subscribers
+- `src/config/online.js` — runtime backend detection via `/api/health` with 2.5s timeout, cached per session
+- `src/ui/room-create.js`, `src/ui/room-join.js`, `src/ui/lobby.js` — new screens
+- Home screen surfaces Create / Join cards only when backend is reachable
+
+### Changed
+- Service worker bypasses cache for `/api/*` requests (state must be fresh)
+- `game.js` is online-aware: submits via server when in a room, polls for opponent moves, "Leave room" instead of "End game"
+- Cache → v14
+
+### Lifecycle (zero maintenance)
+- Lobby rooms TTL: 30 min, refreshed on any activity
+- In-progress games TTL: 30 min, refreshed on every move
+- Ended games TTL: 5 min (so all clients see the result), then auto-deleted
+- Each API call opportunistically sweeps expired rows — no cron job
+
+### Dual deploy preserved
+- **GitHub Pages** (`dhruvinrsoni.github.io/rangoli-royale/`) — pure offline, no backend, online buttons hidden when `/api/health` fails
+- **Vercel** (`rangoli-royale.vercel.app`) — same code + backend, online buttons surface when health check succeeds
+
 ## [0.1.8] — 2026-05-29
 
 ### Changed
