@@ -1,4 +1,4 @@
-import { getSession, onUpdate, startRoom, leaveRoom, isHost } from '../lib/online-session.js';
+import { getSession, onUpdate, startRoom, leaveRoom, isHost, refresh } from '../lib/online-session.js';
 import { saveCurrentGame, clearCurrentGame } from '../lib/storage.js';
 
 let unsub = null;
@@ -93,6 +93,7 @@ function render() {
       ${canStart ? `<button type="button" id="start-game" class="primary">Start game</button>` : ''}
       ${isHost() && !canStart ? `<p class="lobby-hint">Need at least 2 players to start</p>` : ''}
       ${!isHost() ? `<p class="lobby-hint">Waiting for host to start…</p>` : ''}
+      <button type="button" id="refresh" class="ghost">↻ Refresh</button>
       <button type="button" id="leave" class="ghost">Leave room</button>
     </div>
   `;
@@ -109,6 +110,13 @@ function render() {
     btn.textContent = 'Starting…';
     try { await startRoom(); } catch (err) { toast(err.message || 'Could not start'); btn.disabled = false; btn.textContent = 'Start game'; }
   });
+  root.querySelector('#refresh')?.addEventListener('click', async () => {
+    const btn = root.querySelector('#refresh');
+    btn.disabled = true;
+    btn.textContent = '↻ Refreshing…';
+    try { await refresh(); } finally { btn.disabled = false; btn.textContent = '↻ Refresh'; }
+  });
+
   root.querySelector('#leave')?.addEventListener('click', async () => {
     if (!confirm('Leave the room?')) return;
     await leaveRoom();

@@ -1,4 +1,4 @@
-import { joinRoom } from '../lib/online-session.js';
+import { joinRoom, getRememberedName } from '../lib/online-session.js';
 
 export function mount(target) {
   const params = new URLSearchParams(location.hash.split('?')[1] || '');
@@ -19,7 +19,7 @@ export function mount(target) {
       </label>
       <label class="join-field">
         <span>Your name</span>
-        <input type="text" name="name" placeholder="Your nickname" maxlength="20" required>
+        <input type="text" name="name" placeholder="Your nickname" maxlength="20" value="${getRememberedName()}" required>
       </label>
       <div class="setup-actions">
         <a href="#home" class="cancel">Cancel</a>

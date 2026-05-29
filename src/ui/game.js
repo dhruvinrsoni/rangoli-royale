@@ -5,7 +5,7 @@ import { renderGridSvg } from './game-render.js';
 import { buzz } from '../features/haptic.js';
 import { playMoveBlip, playInvalidBuzz } from '../features/sound-fx.js';
 import { isEnabled } from '../config/features.js';
-import { isActive as onlineActive, isMyTurn, getMyTeam, getSession, onUpdate as onOnlineUpdate, submitMoveOnline, leaveRoom as leaveOnlineRoom } from '../lib/online-session.js';
+import { isActive as onlineActive, isMyTurn, getMyTeam, getSession, onUpdate as onOnlineUpdate, submitMoveOnline, leaveRoom as leaveOnlineRoom, refresh as refreshOnline } from '../lib/online-session.js';
 
 let state = null;
 let grid = null;
@@ -73,6 +73,7 @@ function render() {
     <section class="game-grid-host" id="game-grid-host"></section>
     <footer class="game-footer">
       ${canUndo ? `<button type="button" id="undo-move" class="ghost">Undo last move</button>` : ''}
+      ${isOnline ? `<button type="button" id="refresh" class="ghost">↻ Refresh</button>` : ''}
       <button type="button" id="end-game" class="ghost">${isOnline ? 'Leave room' : 'End game'}</button>
     </footer>
   `;
@@ -95,6 +96,13 @@ function render() {
     }
   });
 
+  root.querySelector('#refresh')?.addEventListener('click', async () => {
+    const btn = root.querySelector('#refresh');
+    btn.disabled = true;
+    btn.textContent = '↻ Refreshing…';
+    try { await refreshOnline(); } finally { btn.disabled = false; btn.textContent = '↻ Refresh'; }
+  });
+
   const undoBtn = root.querySelector('#undo-move');
   if (undoBtn) {
     undoBtn.addEventListener('click', () => {
@@ -111,7 +119,21 @@ function render() {
 }
 
 export function mount(target) {
-  state = getCurrentGame();
+  if (onlineActive()) {
+    const session = getSession();
+    if (session?.state) {
+      state = {
+        setup: session.state.setup,
+        moveLog: session.state.moveLog,
+        status: session.state.status,
+      };
+      saveCurrentGame(state);
+    } else {
+      state = getCurrentGame();
+    }
+  } else {
+    state = getCurrentGame();
+  }
   if (!state) {
     target.innerHTML = `
       <header class="brand"><h1>No game in progress</h1></header>

@@ -1,7 +1,7 @@
 import { SHAPES } from '../lib/geometry.js';
 import { DIFFICULTY_PRESETS } from '../config/difficulty.js';
 import { COLOR_PRESETS, DEFAULT_PRESET } from '../config/color-presets.js';
-import { createRoom } from '../lib/online-session.js';
+import { createRoom, getRememberedName } from '../lib/online-session.js';
 
 const DEFAULTS = {
   playerCount: 4,
@@ -27,7 +27,7 @@ export function mount(target) {
     <form id="room-form" class="setup-form" novalidate>
       <fieldset class="field">
         <legend>Your name</legend>
-        <input type="text" name="hostName" placeholder="Your nickname" maxlength="20" class="text-input" required>
+        <input type="text" name="hostName" placeholder="Your nickname" maxlength="20" class="text-input" value="${getRememberedName()}" required>
       </fieldset>
 
       <fieldset class="field">
