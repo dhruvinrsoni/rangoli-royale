@@ -23,7 +23,7 @@
   <script type="module">
     import { generateGrid, edgesIntersect, SHAPES } from './src/lib/geometry.js';
     import { createGame, applyMove, currentTeam, legalMovesFor, undoLastMove, InvalidMoveError, MoveError } from './src/lib/turn-engine.js';
-    import { longestLine, largestTree, scoreFor, determineWinner } from './src/lib/scoring.js';
+    import { longestLine, largestTree, dotsCovered, scoreFor, determineWinner } from './src/lib/scoring.js';
 
     const out = document.getElementById('output');
     const summary = document.getElementById('summary');
@@ -160,6 +160,25 @@
     assertTrue(diamond6.legalEdges.length < rect6.legalEdges.length, 'diamond fewer edges (boundary dots dropped)');
     assertEq(diamond6.shape, 'diamond', 'grid carries its shape name');
     assertEq(generateGrid({ rows: 4, cols: 4, spacing: 40 }).shape, 'rectangle', 'default shape is rectangle');
+
+    section('Shape symmetry — A and B dot counts MUST match for fair play');
+    for (const shape of SHAPES) {
+      for (const size of [4, 6, 8]) {
+        const g = generateGrid({ rows: size, cols: size, spacing: 40, shape });
+        const aCount = g.dots.filter(d => d.team === 'A').length;
+        const bCount = g.dots.filter(d => d.team === 'B').length;
+        assertEq(aCount, bCount, `${shape} ${size}x${size}: A=${aCount} == B=${bCount}`);
+      }
+    }
+
+    section('Scoring — dotsCovered');
+    let s5 = makeGame();
+    s5 = applyMove(s5, 'vA-0-0');
+    s5 = applyMove(s5, 'vB-0-0');
+    s5 = applyMove(s5, 'hA-0-0');
+    s5 = applyMove(s5, 'hB-0-0');
+    assertEq(dotsCovered(s5, 'A'), 3, "A touched 3 distinct dots after vA-0-0 + hA-0-0 (shared dot at (0,0))");
+    assertEq(dotsCovered(s5, 'B'), 3, "B touched 3 distinct dots after vB-0-0 + hB-0-0");
 
     section('Undo');
     const before = s4.moveLog.length;
