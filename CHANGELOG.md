@@ -6,6 +6,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-05-29
+
+### Fixed
+- **SVG pulsing on every poll.** `pollOnce` now hashes the state into a short key and only notifies subscribers when the key changes. Identical state arriving from polls no longer triggers a destroy+rebuild of the grid.
+
+### Added — Lifecycle
+- **Leaving mid-game ends the game.** Server-side `leaveRoom` sets `status='ended'`, records `endReason: "X left the room"`. Both players land on the endgame screen with the reason shown.
+- **Host transfer in lobby.** If the host leaves while in lobby, `hostSeat` shifts to the next remaining player. The new host can start when ≥2 players are present.
+- **Endgame screen reads online state directly** when in a room (gets `endReason`, fresh `moveLog`).
+- **Leave room button on endgame** for online games.
+
+### Changed — Polling
+- **Adaptive poll intervals** based on who's-up:
+  - Opponent's turn → 1.5s (down from 2s) — fastest worst-case lag
+  - Lobby → 2s (same)
+  - Your turn → 5s — no need to poll fast while you're thinking
+  - Ended → 8s — almost idle
+- `endReason` is part of the state-key hash so "opponent left" propagates immediately.
+- Cache → v16
+
 ## [0.2.1] — 2026-05-29
 
 ### Fixed

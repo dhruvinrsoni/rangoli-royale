@@ -1,1 +1,1 @@
-v0.2.1 · 2026-05-29 19:00:00 IST · Online session persistence + always-emit polling + refresh button + remembered name
+v0.2.2 · 2026-05-29 19:30:00 IST · Stop SVG pulsing + adaptive polling + leave-mid-game ends with reason
