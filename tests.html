@@ -66,61 +66,65 @@
       ...overrides,
     });
 
-    section('Geometry');
+    section('Geometry — staggered two-sub-grid layout');
     const grid = generateGrid({ rows: 4, cols: 4, spacing: 40 });
-    assertEq(grid.dots.length, 16, '4x4 dot count = 16');
-    assertEq(grid.legalEdges.length, 20, '4x4 legal edge count = 20 (12 vertical + 8 horizontal)');
-    assertEq(grid.legalEdges.filter(e => e.team === 'A').length, 10, '4x4 team A edges = 10');
-    assertEq(grid.legalEdges.filter(e => e.team === 'B').length, 10, '4x4 team B edges = 10');
-    assertEq(grid.crossings.get('h-0-0').size, 2, 'h-0-0 crosses 2 B edges (v-1-0 + parallel h-1-0)');
-    assertTrue(grid.crossings.get('h-0-0').has('v-1-0'), 'h-0-0 crosses perpendicular v-1-0');
-    assertTrue(grid.crossings.get('h-0-0').has('h-1-0'), 'h-0-0 overlaps parallel B horizontal h-1-0');
-    assertEq(grid.crossings.get('h-0-1').size, 3, 'h-0-1 crosses 3 B edges (2 verticals + 1 parallel horizontal)');
-    assertEq(grid.crossings.get('v-0-0').size, 0, 'v-0-0 (col 0, leftmost) crosses 0 B edges');
+    assertEq(grid.dots.length, 32, '4x4 dot count = 32 (16 A + 16 B)');
+    assertEq(grid.dots.filter(d => d.team === 'A').length, 16, '16 team A dots');
+    assertEq(grid.dots.filter(d => d.team === 'B').length, 16, '16 team B dots');
+    assertEq(grid.legalEdges.length, 48, '4x4 legal edge count = 48 (24 per team)');
+    assertEq(grid.legalEdges.filter(e => e.team === 'A').length, 24, '24 team A edges');
+    assertEq(grid.legalEdges.filter(e => e.team === 'B').length, 24, '24 team B edges');
+    assertEq(grid.bounds.maxX, 140, 'bounds.maxX = (cols-1 + 0.5)*spacing = 140');
+    assertEq(grid.bounds.maxY, 140, 'bounds.maxY = (rows-1 + 0.5)*spacing = 140');
+
+    section('Geometry — interior crossings only');
+    assertEq(grid.crossings.get('hA-0-0').size, 0, 'top-edge hA-0-0 crosses nothing (no B above)');
+    assertTrue(grid.crossings.get('hA-0-1').has('vB-0-0'), 'interior hA-0-1 crosses vB-0-0 at (0.5S, 1S)');
+    assertEq(grid.crossings.get('hA-0-1').size, 1, 'interior hA-0-1 crosses exactly one B vertical');
+    assertTrue(grid.crossings.get('vA-1-0').has('hB-0-0'), 'vA-1-0 crosses hB-0-0 at (1S, 0.5S)');
 
     section('edgesIntersect (geometric primitive)');
-    const a = grid.edgeById.get('h-0-1');
-    const b = grid.edgeById.get('v-1-0');
-    assertTrue(edgesIntersect(a, b), 'h-0-1 ∩ v-1-0 (endpoint at dot)');
-    const c = grid.edgeById.get('v-3-0');
-    assertEq(edgesIntersect(a, c), false, 'h-0-1 ∩ v-3-0 (far column)');
+    const a = grid.edgeById.get('hA-0-1');
+    const b = grid.edgeById.get('vB-0-0');
+    assertTrue(edgesIntersect(a, b), 'hA-0-1 ∩ vB-0-0 (interior crossing)');
+    const c = grid.edgeById.get('vB-2-0');
+    assertEq(edgesIntersect(a, c), false, 'hA-0-1 ∩ vB-2-0 (far column, no crossing)');
 
     section('Turn engine — happy path');
     let s = makeGame();
     assertEq(s.status, 'in-progress', 'new game is in-progress');
     assertEq(currentTeam(s), 'A', 'starts with team A');
     assertEq(s.moveLog.length, 0, 'empty move log');
-    s = applyMove(s, 'v-0-0');
+    s = applyMove(s, 'vA-0-0');
     assertEq(s.moveLog.length, 1, 'one move recorded');
     assertEq(s.moveLog[0].team, 'A', 'first move belongs to A');
     assertEq(currentTeam(s), 'B', 'B is up next');
-    s = applyMove(s, 'v-1-0');
+    s = applyMove(s, 'vB-0-0');
     assertEq(currentTeam(s), 'A', 'alternates back to A');
 
     section('Turn engine — invalid moves');
     let s2 = makeGame();
-    assertThrows(() => applyMove(s2, 'v-1-0'), MoveError.WRONG_TEAM, 'A cannot play B edge');
+    assertThrows(() => applyMove(s2, 'vB-0-0'), MoveError.WRONG_TEAM, 'A cannot play B edge');
     assertThrows(() => applyMove(s2, 'nonexistent'), MoveError.UNKNOWN_EDGE, 'unknown edge id rejected');
-    const s2b = applyMove(s2, 'v-0-0');
-    assertThrows(() => applyMove(s2b, 'v-0-0'), MoveError.ALREADY_CLAIMED, 'cannot claim same edge twice');
+    const s2b = applyMove(s2, 'vA-0-0');
+    assertThrows(() => applyMove(s2b, 'vA-0-0'), MoveError.ALREADY_CLAIMED, 'cannot claim same edge twice');
 
     section('Turn engine — crossing blocks opponent');
     let s3 = makeGame();
-    s3 = applyMove(s3, 'h-0-1');
-    assertThrows(() => applyMove(s3, 'v-1-0'), MoveError.BLOCKED_BY_CROSSING, 'B v-1-0 blocked by A h-0-1');
-    assertThrows(() => applyMove(s3, 'v-1-1'), MoveError.BLOCKED_BY_CROSSING, 'B v-1-1 blocked by A h-0-1');
-    s3 = applyMove(s3, 'v-1-2');
-    assertEq(s3.moveLog.length, 2, 'rejected blocks do not advance log; legal B move does');
+    s3 = applyMove(s3, 'hA-0-1');
+    assertThrows(() => applyMove(s3, 'vB-0-0'), MoveError.BLOCKED_BY_CROSSING, 'B vB-0-0 blocked by A hA-0-1');
+    s3 = applyMove(s3, 'vB-1-0');
+    assertEq(s3.moveLog.length, 2, 'rejected block does not advance log; legal B move does');
 
     section('Scoring — longest line');
     let s4 = makeGame();
-    s4 = applyMove(s4, 'v-0-0');
-    s4 = applyMove(s4, 'v-3-0');
-    s4 = applyMove(s4, 'v-0-1');
-    s4 = applyMove(s4, 'v-3-1');
-    s4 = applyMove(s4, 'v-0-2');
-    assertEq(longestLine(s4, 'A'), 3, "A's three v-0-* verticals form a run of 3");
-    assertEq(longestLine(s4, 'B'), 2, "B's two v-3-* verticals form a run of 2");
+    s4 = applyMove(s4, 'vA-0-0');
+    s4 = applyMove(s4, 'vB-3-0');
+    s4 = applyMove(s4, 'vA-0-1');
+    s4 = applyMove(s4, 'vB-3-1');
+    s4 = applyMove(s4, 'vA-0-2');
+    assertEq(longestLine(s4, 'A'), 3, "A's three vA-0-* verticals form a run of 3");
+    assertEq(longestLine(s4, 'B'), 2, "B's two vB-3-* verticals form a run of 2");
 
     section('Scoring — largest tree');
     assertEq(largestTree(s4, 'A'), 4, "A's chain spans 4 dots (col 0, rows 0-3)");
