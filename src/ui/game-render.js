@@ -117,6 +117,25 @@ export function renderGridSvg(state, grid) {
   svg.appendChild(claimedLayer);
   svg.appendChild(dotsLayer);
 
+  if (activeTeam) svg.classList.add('is-playable');
+
+  let hoveredEl = null;
+  const setHovered = (newEl) => {
+    if (hoveredEl === newEl) return;
+    if (hoveredEl) hoveredEl.classList.remove('is-hovered');
+    hoveredEl = newEl;
+    if (hoveredEl) hoveredEl.classList.add('is-hovered');
+  };
+
+  svg.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') return;
+    const { x, y } = clientToSvg(svg, e.clientX, e.clientY);
+    const closest = findClosestActiveEdge(x, y, grid, activeTeam, claimed);
+    if (!closest) { setHovered(null); return; }
+    setHovered(ghostLayer.querySelector(`[data-edge="${closest.id}"]`));
+  });
+  svg.addEventListener('pointerleave', () => setHovered(null));
+
   svg.addEventListener('click', async (e) => {
     const { x, y } = clientToSvg(svg, e.clientX, e.clientY);
     const closest = findClosestActiveEdge(x, y, grid, activeTeam, claimed);
