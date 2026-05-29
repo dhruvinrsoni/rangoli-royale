@@ -47,7 +47,7 @@ export function generateGrid({ rows, cols, spacing = 40, shape = 'rectangle' }) 
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      if (!includesPoint(col + 0.5, row + 0.5)) continue;
+      if (!includesPoint(col, row)) continue;
       dots.push({
         id: `dB-${col}-${row}`,
         team: 'B',
