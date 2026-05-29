@@ -6,6 +6,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-05-29
+
+### Fixed
+- **Online session survives page reload** — code, clientId, seat, name, and last-known state are now persisted in `localStorage`. On reload, `restoreSessionSync()` re-creates the session and resumes polling. Host or joiner reloading no longer kicks anyone out.
+- **Polling now emits on every state change, not just on new moves.** The previous `hasUpdate` flag only fired when `moveLog` grew, so player-joins and lobby→game transitions were silently dropped. Server `GET /api/<code>` now always returns full state; client always notifies subscribers.
+- **Auto-resume on boot** — if you reload at `#home` with a persisted session, you land in `#lobby` / `#game` / `#endgame` depending on the room's status.
+- **Game screen reads from live online session on mount**, not just stale `currentGame` storage.
+
+### Added
+- Remembered name across rooms (`rangoli-royale:online-name` in localStorage) — both Create and Join forms pre-fill it.
+- **Manual `↻ Refresh`** button in lobby and game footer. Triggers an immediate poll on demand.
+- `cache: 'no-store'` on every online API call so service workers and HTTP caches can't serve stale state.
+
+### Changed
+- Poll interval: 2s (active) / 5s (idle) — was 2.5s / 6s.
+- Cache → v15
+
 ## [0.2.0] — 2026-05-29
 
 ### Added
