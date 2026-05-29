@@ -1,5 +1,7 @@
 import { getCurrentGame, clearCurrentGame, saveSetup, appendHistory, getHistory } from '../lib/storage.js';
 import { determineWinner, longestLine, largestTree } from '../lib/scoring.js';
+import { deriveGrid } from '../lib/turn-engine.js';
+import { buildFinalGridSvg, buildResultCardPng } from './result-card.js';
 
 let recorded = false;
 
@@ -38,6 +40,7 @@ export function mount(target) {
   }
   const result = determineWinner(state);
   recordHistory(state, result);
+  const grid = deriveGrid(state);
 
   const a = state.setup.teams.A;
   const b = state.setup.teams.B;
@@ -55,6 +58,10 @@ export function mount(target) {
       <p class="tagline">${modeLabel} · ${state.moveLog.length} moves</p>
     </header>
 
+    <section class="endgame-board" aria-label="Final board">
+      ${buildFinalGridSvg(state, grid)}
+    </section>
+
     <section class="endgame-card">
       <div class="endgame-team" style="--team-color:${a.color}">
         <span class="endgame-team-name">${a.name}</span>
@@ -70,7 +77,8 @@ export function mount(target) {
 
     <div class="endgame-actions">
       <button type="button" id="replay" class="primary">Play again</button>
-      <button type="button" id="share">Share result</button>
+      <button type="button" id="save-image">Save image</button>
+      <button type="button" id="share">Share text</button>
       <a href="#home" class="ghost-link">Home</a>
     </div>
   `;
@@ -88,6 +96,41 @@ export function mount(target) {
     });
     clearCurrentGame();
     location.hash = '#setup';
+  });
+
+  target.querySelector('#save-image').addEventListener('click', async () => {
+    const btn = target.querySelector('#save-image');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+      const png = await buildResultCardPng(state, grid, result);
+      const filename = `rangoli-royale-${new Date().toISOString().slice(0, 10)}.png`;
+      const file = new File([png], filename, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Rangoli Royale',
+          text: `${winnerLabel} · ${a.name} ${result.scores.A} vs ${b.name} ${result.scores.B}`,
+        });
+      } else {
+        const url = URL.createObjectURL(png);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch (err) {
+      console.error('save image failed', err);
+      alert(`Could not save image: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
   });
 
   target.querySelector('#share').addEventListener('click', async () => {
