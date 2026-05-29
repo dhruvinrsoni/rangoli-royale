@@ -145,6 +145,55 @@
 .grid-preset-label { font-weight: 600; }
 .grid-preset-meta { font-size: var(--rr-text-xs); opacity: 0.8; }
 
+.shape-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--rr-space-2);
+}
+.shape-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--rr-space-2);
+  padding: var(--rr-space-3) var(--rr-space-2);
+  background: var(--rr-bg-elevated);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--rr-radius-sm);
+  cursor: pointer;
+  min-height: var(--rr-tap);
+}
+.shape-preset.is-selected {
+  border-color: var(--rr-accent);
+  background: var(--rr-bg-card);
+}
+.shape-preview {
+  display: block;
+  width: 28px;
+  height: 28px;
+  background: var(--rr-accent);
+  opacity: 0.75;
+}
+.shape-preview.shape-rectangle {
+  border-radius: 2px;
+}
+.shape-preview.shape-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+.shape-preview.shape-circle {
+  border-radius: 50%;
+}
+.shape-preview.shape-hexagon {
+  clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+}
+.shape-label {
+  font-size: var(--rr-text-xs);
+  color: var(--rr-text-muted);
+  text-transform: capitalize;
+}
+.shape-preset.is-selected .shape-label {
+  color: var(--rr-text);
+}
+
 .win-modes {
   display: grid;
   gap: var(--rr-space-2);

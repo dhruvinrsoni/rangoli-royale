@@ -1,4 +1,5 @@
 import { createGame } from '../lib/turn-engine.js';
+import { SHAPES } from '../lib/geometry.js';
 import { saveSetup, getSetup, saveCurrentGame } from '../lib/storage.js';
 import { suggestedDifficulty, DIFFICULTY_PRESETS } from '../config/difficulty.js';
 import { COLOR_PRESETS, DEFAULT_PRESET } from '../config/color-presets.js';
@@ -12,6 +13,7 @@ const DEFAULTS = {
   rows: 4,
   cols: 4,
   winMode: 'line',
+  shape: 'rectangle',
 };
 
 function loadInitial() {
@@ -79,6 +81,18 @@ export function mount(target) {
             <button type="button" class="grid-preset ${state.rows === d.rows && state.cols === d.cols ? 'is-selected' : ''}" data-rows="${d.rows}" data-cols="${d.cols}">
               <span class="grid-preset-label">${d.label}</span>
               <span class="grid-preset-meta">${d.rows} × ${d.cols}</span>
+            </button>
+          `).join('')}
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>Board shape</legend>
+        <div class="shape-presets">
+          ${SHAPES.map(s => `
+            <button type="button" class="shape-preset ${state.shape === s ? 'is-selected' : ''}" data-shape="${s}">
+              <span class="shape-preview shape-${s}" aria-hidden="true"></span>
+              <span class="shape-label">${s}</span>
             </button>
           `).join('')}
         </div>
@@ -159,6 +173,14 @@ export function mount(target) {
       });
       return;
     }
+    const shapeBtn = e.target.closest('.shape-preset');
+    if (shapeBtn) {
+      state.shape = shapeBtn.dataset.shape;
+      target.querySelectorAll('.shape-preset').forEach(el => {
+        el.classList.toggle('is-selected', el === shapeBtn);
+      });
+      return;
+    }
   });
 
   form.addEventListener('submit', (e) => {
@@ -171,6 +193,7 @@ export function mount(target) {
         spacing: 40,
         playerCount: state.playerCount,
         winMode: state.winMode,
+        shape: state.shape,
         teams: {
           A: { name: state.teamAName, color: state.teamAColor },
           B: { name: state.teamBName, color: state.teamBColor },
