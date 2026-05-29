@@ -23,12 +23,17 @@ export function renderGridSvg(state, grid) {
   const claimed = claimedEdges(state);
   const activeTeam = currentTeam(state, grid);
 
-  const width = (grid.cols - 1) * grid.spacing + 2 * MARGIN;
-  const height = (grid.rows - 1) * grid.spacing + 2 * MARGIN;
+  const b = grid.bounds || {
+    minX: 0, minY: 0,
+    maxX: (grid.cols - 1) * grid.spacing,
+    maxY: (grid.rows - 1) * grid.spacing,
+  };
+  const width = (b.maxX - b.minX) + 2 * MARGIN;
+  const height = (b.maxY - b.minY) + 2 * MARGIN;
 
   const svg = el('svg', {
     xmlns: SVG_NS,
-    viewBox: `${-MARGIN} ${-MARGIN} ${width} ${height}`,
+    viewBox: `${b.minX - MARGIN} ${b.minY - MARGIN} ${width} ${height}`,
     'aria-label': 'Game grid',
     class: 'game-grid',
     role: 'img',
@@ -53,27 +58,29 @@ export function renderGridSvg(state, grid) {
       }));
     } else {
       const isActive = edge.team === activeTeam;
-      const hit = el('line', {
-        x1: edge.x1, y1: edge.y1, x2: edge.x2, y2: edge.y2,
-        stroke: 'transparent',
-        'stroke-width': HIT_RADIUS * 2,
-        'stroke-linecap': 'round',
-        class: `edge-hit ${isActive ? 'is-active' : 'is-inactive'}`,
-        'data-edge': edge.id,
-        'data-team': edge.team,
-      });
-      hitLayer.appendChild(hit);
+      if (!isActive) continue;
 
       const ghost = el('line', {
         x1: edge.x1, y1: edge.y1, x2: edge.x2, y2: edge.y2,
         stroke: teams[edge.team].color,
         'stroke-width': 2,
         'stroke-linecap': 'round',
-        class: `edge-ghost ${isActive ? 'is-active' : ''}`,
+        class: 'edge-ghost is-active',
         'data-edge': edge.id,
-        opacity: isActive ? 0.18 : 0.05,
+        opacity: 0.25,
       });
-      hitLayer.insertBefore(ghost, hit);
+      hitLayer.appendChild(ghost);
+
+      const hit = el('line', {
+        x1: edge.x1, y1: edge.y1, x2: edge.x2, y2: edge.y2,
+        stroke: 'transparent',
+        'stroke-width': HIT_RADIUS * 2,
+        'stroke-linecap': 'round',
+        class: 'edge-hit is-active',
+        'data-edge': edge.id,
+        'data-team': edge.team,
+      });
+      hitLayer.appendChild(hit);
     }
   }
 
