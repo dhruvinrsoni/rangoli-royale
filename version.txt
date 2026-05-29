@@ -1,1 +1,1 @@
-v0.1.0 · 2026-05-28 21:57:46 IST · Initial public release
+v0.1.1 · 2026-05-29 08:04:28 IST · Staggered grid + geometric hit detection
