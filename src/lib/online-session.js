@@ -1,13 +1,29 @@
 import { getClientId } from '../config/online.js';
 
-const POLL_FAST_MS = 2000;
-const POLL_SLOW_MS = 5000;
+const POLL_OPPONENT_TURN_MS = 1500;
+const POLL_LOBBY_MS = 2000;
+const POLL_MY_TURN_MS = 5000;
+const POLL_ENDED_MS = 8000;
 const SESSION_KEY = 'rangoli-royale:online-session';
 const NAME_KEY = 'rangoli-royale:online-name';
 
 let session = null;
 let pollTimer = null;
 let listeners = new Set();
+let lastEmittedKey = null;
+
+function stateKey(state) {
+  if (!state) return 'null';
+  const players = state.players?.map(p => `${p.seat}:${p.team}:${p.clientId.slice(-4)}`).join(',') || '';
+  return [
+    state.moveLog?.length ?? 0,
+    state.status,
+    state.players?.length ?? 0,
+    state.hostSeat ?? '',
+    state.endReason ?? '',
+    players,
+  ].join('|');
+}
 
 function notify(evt) {
   for (const fn of listeners) {
@@ -56,23 +72,38 @@ async function pollOnce() {
       return;
     }
     const json = await resp.json();
+    const key = stateKey(json.state);
     session.state = json.state;
     persist();
-    notify({ kind: 'state', state: json.state });
+    if (key !== lastEmittedKey) {
+      lastEmittedKey = key;
+      notify({ kind: 'state', state: json.state });
+    }
   } catch (err) {
     notify({ kind: 'network-error', error: err });
   }
 }
 
+function nextInterval() {
+  const state = session?.state;
+  if (!state) return POLL_LOBBY_MS;
+  if (state.status === 'lobby') return POLL_LOBBY_MS;
+  if (state.status === 'ended') return POLL_ENDED_MS;
+  const myTeam = getMyTeam();
+  if (!myTeam || state.moveLog.length === 0) {
+    return state.setup.startingTeam === myTeam ? POLL_MY_TURN_MS : POLL_OPPONENT_TURN_MS;
+  }
+  const last = state.moveLog[state.moveLog.length - 1];
+  return last.team === myTeam ? POLL_OPPONENT_TURN_MS : POLL_MY_TURN_MS;
+}
+
 function schedule() {
   clearTimeout(pollTimer);
   if (!session) return;
-  const status = session.state?.status;
-  const interval = status === 'in-progress' || status === 'lobby' ? POLL_FAST_MS : POLL_SLOW_MS;
   pollTimer = setTimeout(async () => {
     await pollOnce();
     schedule();
-  }, interval);
+  }, nextInterval());
 }
 
 export function isActive() {
@@ -133,6 +164,7 @@ export async function startRoom() {
   if (!session) throw new Error('No session');
   const json = await api(`/api/${encodeURIComponent(session.code)}/start`, { body: { clientId: session.clientId } });
   session.state = json.state;
+  lastEmittedKey = stateKey(json.state);
   persist();
   notify({ kind: 'state', state: json.state });
   return json.state;
@@ -145,6 +177,7 @@ export async function submitMoveOnline(edgeId) {
     body: { clientId: session.clientId, edgeId, expectedMoves },
   });
   session.state = json.state;
+  lastEmittedKey = stateKey(json.state);
   persist();
   notify({ kind: 'state', state: json.state });
   return json.state;
@@ -164,6 +197,7 @@ export function stop() {
   clearTimeout(pollTimer);
   pollTimer = null;
   session = null;
+  lastEmittedKey = null;
   persist();
 }
 
@@ -182,6 +216,7 @@ export function restoreSessionSync() {
     name: stored.name || '',
     state: stored.lastState || null,
   };
+  lastEmittedKey = stateKey(session.state);
   schedule();
   pollOnce();
   return session;

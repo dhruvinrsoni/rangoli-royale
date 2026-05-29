@@ -78,9 +78,23 @@ export function applyServerMove(state, { clientId, edgeId }) {
 }
 
 export function leaveRoom(state, clientId) {
+  const leaver = state.players.find(p => p.clientId === clientId);
   const remaining = state.players.filter(p => p.clientId !== clientId);
   if (remaining.length === 0) return null;
-  return { ...state, players: remaining };
+
+  let next = { ...state, players: remaining };
+
+  if (leaver && leaver.seat === state.hostSeat) {
+    next.hostSeat = remaining[0].seat;
+  }
+
+  if (state.status === 'in-progress') {
+    next.status = 'ended';
+    next.endReason = `${leaver?.name || 'A player'} left the room`;
+    next.endedAt = nowMs();
+  }
+
+  return next;
 }
 
 export function touchPlayer(state, clientId) {

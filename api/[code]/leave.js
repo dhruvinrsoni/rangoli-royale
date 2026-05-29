@@ -1,4 +1,4 @@
-import { sql, TTL_LOBBY_MIN } from '../_lib/db.js';
+import { sql, TTL_LOBBY_MIN, TTL_ENDED_MIN } from '../_lib/db.js';
 import { ok, err, readBody, withSetup } from '../_lib/http.js';
 import { normalizeCode, leaveRoom } from '../_lib/room-logic.js';
 
@@ -18,10 +18,11 @@ export default async function handler(req, res) {
     if (next === null) {
       await q`DELETE FROM rooms WHERE code = ${code}`;
     } else {
+      const ttl = next.status === 'ended' ? TTL_ENDED_MIN : TTL_LOBBY_MIN;
       await q`
         UPDATE rooms
         SET state = ${JSON.stringify(next)}::jsonb,
-            expires_at = now() + (${TTL_LOBBY_MIN} * interval '1 minute')
+            expires_at = now() + (${ttl} * interval '1 minute')
         WHERE code = ${code}
       `;
     }
