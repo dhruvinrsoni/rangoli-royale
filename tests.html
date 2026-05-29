@@ -116,30 +116,40 @@
     s3 = applyMove(s3, 'vB-1-0');
     assertEq(s3.moveLog.length, 2, 'rejected block does not advance log; legal B move does');
 
-    section('Scoring — longest line');
+    section('Scoring — longest path (dots) on a linear chain');
     let s4 = makeGame();
     s4 = applyMove(s4, 'vA-0-0');
     s4 = applyMove(s4, 'vB-3-0');
     s4 = applyMove(s4, 'vA-0-1');
     s4 = applyMove(s4, 'vB-3-1');
     s4 = applyMove(s4, 'vA-0-2');
-    assertEq(longestLine(s4, 'A'), 3, "A's three vA-0-* verticals form a run of 3");
-    assertEq(longestLine(s4, 'B'), 2, "B's two vB-3-* verticals form a run of 2");
+    assertEq(longestLine(s4, 'A'), 4, "A's chain spans 4 dots (col 0, rows 0-3)");
+    assertEq(longestLine(s4, 'B'), 3, "B's chain spans 3 dots (col 3, rows 0-2)");
 
     section('Scoring — largest tree');
-    assertEq(largestTree(s4, 'A'), 4, "A's chain spans 4 dots (col 0, rows 0-3)");
-    assertEq(largestTree(s4, 'B'), 3, "B's chain spans 3 dots (col 3, rows 0-2)");
+    assertEq(largestTree(s4, 'A'), 4, "A's connected component is 4 dots");
+    assertEq(largestTree(s4, 'B'), 3, "B's connected component is 3 dots");
 
-    section('Scoring — winner determination');
+    section('Scoring — winner determination (line mode)');
     const result = determineWinner(s4);
     assertEq(result.winner, 'A', 'A wins on longest line');
-    assertEq(result.scores.A, 3, 'reported A score = 3');
-    assertEq(result.scores.B, 2, 'reported B score = 2');
+    assertEq(result.scores.A, 4, 'reported A score = 4 dots');
+    assertEq(result.scores.B, 3, 'reported B score = 3 dots');
 
     section('Scoring — tree mode dispatch');
     const s4tree = { ...s4, setup: { ...s4.setup, winMode: 'tree' } };
     assertEq(scoreFor(s4tree, 'A'), 4, 'tree mode uses dot count');
     assertEq(determineWinner(s4tree).winner, 'A', 'A also wins on tree count');
+
+    section('Scoring — line vs tree diverge on a Y-shape');
+    let sY = makeGame();
+    sY = applyMove(sY, 'vA-0-0');
+    sY = applyMove(sY, 'vB-2-2');
+    sY = applyMove(sY, 'vA-0-1');
+    sY = applyMove(sY, 'vB-1-2');
+    sY = applyMove(sY, 'hA-0-1');
+    assertEq(largestTree(sY, 'A'), 4, "Y-shape: tree has all 4 dots");
+    assertEq(longestLine(sY, 'A'), 3, "Y-shape: longest path is 3 dots (leaf → center → leaf), the branch doesn't help line score");
 
     section('Shape filters');
     assertEq(SHAPES.length, 4, 'four shapes available');
