@@ -1,3 +1,5 @@
+import { APP_VERSION } from '../config/version.js';
+
 let root = null;
 let pollTimer = null;
 let currentStats = null;
@@ -265,7 +267,7 @@ function renderDashboard() {
     ${roomsTableHtml()}
     ${auditHtml()}
     <p class="admin-footer">
-      Session signed cookie · auto-expires in 4 hours · all actions audited.
+      v${APP_VERSION} · session signed cookie · auto-expires in 4 hours · all actions audited.
       <a href="#home">Back to game</a>
     </p>
   `;

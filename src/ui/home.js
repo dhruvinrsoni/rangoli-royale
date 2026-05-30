@@ -1,6 +1,7 @@
 import { getCurrentGame } from '../lib/storage.js';
 import { canInstall, triggerInstall } from '../main.js';
 import { checkOnlineAvailable } from '../config/online.js';
+import { APP_VERSION } from '../config/version.js';
 
 let installListener = null;
 
@@ -52,7 +53,7 @@ export async function mount(target) {
         <span class="install-btn-meta">Add to home screen · play offline</span>
       </button>` : ''}
 
-    <p class="home-footer">v0.3.6 · ${online.available ? 'online' : 'offline'} · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
+    <p class="home-footer">v${APP_VERSION} · ${online.available ? 'online' : 'offline'} · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
   `;
 
   renderShell({ available: false, max: 0, active: 0 });
