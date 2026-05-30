@@ -38,7 +38,19 @@ async function render() {
     }
   } catch (err) {
     console.error('[router]', route, err);
-    target.innerHTML = `<section class="screen-error"><p>Could not load ${route}. Try refreshing.</p></section>`;
+    target.innerHTML = `
+      <section class="screen-error">
+        <h2>Could not load this screen</h2>
+        <p class="screen-error-detail">${route}</p>
+        <div class="screen-error-actions">
+          <button type="button" id="screen-reload" class="primary">Reload</button>
+          <a href="#home" class="ghost-link">Home</a>
+        </div>
+      </section>
+    `;
+    target.querySelector('#screen-reload')?.addEventListener('click', () => {
+      location.reload();
+    });
   }
 }
 

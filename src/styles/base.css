@@ -144,7 +144,29 @@ a:hover { text-decoration: underline; }
   background: var(--rr-bg-card);
   border-radius: var(--rr-radius);
   text-align: center;
+  color: var(--rr-text);
+  display: grid;
+  gap: var(--rr-space-3);
+}
+.screen-error h2 {
   color: var(--rr-danger);
+  margin: 0;
+}
+.screen-error-detail {
+  color: var(--rr-text-muted);
+  font-family: ui-monospace, monospace;
+  font-size: var(--rr-text-sm);
+  margin: 0;
+}
+.screen-error-actions {
+  display: flex;
+  gap: var(--rr-space-3);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--rr-space-2);
+}
+.screen-error-actions .primary {
+  min-width: 140px;
 }
 
 .sr-only {
