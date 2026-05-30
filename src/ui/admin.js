@@ -33,15 +33,17 @@ function fmtTs(ts) {
   return d.toLocaleString();
 }
 
+let dailyModeHint = false;
+
 function renderLogin(message = '') {
   root.innerHTML = `
     <header class="brand">
-      <h1>Admin</h1>
-      <p class="tagline">Authorized access only</p>
+      <h1>Sūtradhāra</h1>
+      <p class="tagline">The one who holds the thread</p>
     </header>
     <form id="admin-login" class="admin-login">
       <label class="join-field">
-        <span>Admin PIN</span>
+        <span>PIN${dailyModeHint ? ' (with today\'s suffix)' : ''}</span>
         <input type="password" name="pin" autocomplete="off" required minlength="6" autofocus>
       </label>
       <div class="setup-actions">
@@ -58,7 +60,8 @@ function renderLogin(message = '') {
     btn.disabled = true;
     btn.textContent = 'Signing in…';
     try {
-      await api('/api/admin/login', { method: 'POST', body: { pin } });
+      const resp = await api('/api/admin/login', { method: 'POST', body: { pin } });
+      dailyModeHint = !!resp.dailyMode;
       startDashboard();
     } catch (err) {
       renderLogin(err.message || 'Login failed');
@@ -228,8 +231,8 @@ function renderDashboard() {
   root.innerHTML = `
     <header class="brand admin-brand">
       <div>
-        <h1>Admin</h1>
-        <p class="tagline">Rangoli Royale control room</p>
+        <h1>Sūtradhāra</h1>
+        <p class="tagline">Rangoli Royale control room${dailyModeHint ? ' · daily-PIN mode' : ''}</p>
       </div>
       <div class="admin-actions">
         <button type="button" id="refresh-all" class="ghost">↻ Refresh</button>
@@ -331,12 +334,13 @@ async function startDashboard() {
 export async function mount(target) {
   root = target;
   try {
-    await api('/api/admin/me');
+    const me = await api('/api/admin/me');
+    dailyModeHint = !!me.dailyMode;
     startDashboard();
   } catch (err) {
     if (err.code === 'NO_CONFIG') {
       root.innerHTML = `
-        <header class="brand"><h1>Admin not configured</h1></header>
+        <header class="brand"><h1>Sūtradhāra · not configured</h1></header>
         <section class="screen-error">
           <h2>Server is missing admin secrets</h2>
           <p class="screen-error-detail">Set <code>ADMIN_PIN_HASH</code> and <code>ADMIN_COOKIE_SECRET</code> in Vercel env vars, then redeploy.</p>

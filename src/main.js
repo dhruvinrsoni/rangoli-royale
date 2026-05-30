@@ -9,7 +9,7 @@ const ROUTES = Object.freeze({
   '#room-create': () => import('./ui/room-create.js'),
   '#join': () => import('./ui/room-join.js'),
   '#lobby': () => import('./ui/lobby.js'),
-  '#admin': () => import('./ui/admin.js'),
+  '#sutradhara': () => import('./ui/admin.js'),
 });
 
 const DEFAULT_ROUTE = '#home';

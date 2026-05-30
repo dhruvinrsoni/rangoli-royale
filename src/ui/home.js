@@ -52,13 +52,14 @@ export async function mount(target) {
         <span class="install-btn-meta">Add to home screen · play offline</span>
       </button>` : ''}
 
-    <p class="home-footer">v0.3.0 · ${online.available ? 'online' : 'offline'} · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
+    <p class="home-footer">v0.3.1 · ${online.available ? 'online' : 'offline'} · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
   `;
 
   renderShell({ available: false, max: 0, active: 0 });
 
   checkOnlineAvailable().then((status) => {
     renderShell(status);
+    attachUnlock();
   });
 
   target.addEventListener('click', async (e) => {
@@ -67,6 +68,29 @@ export async function mount(target) {
       if (accepted) renderShell({ available: false, max: 0, active: 0 });
     }
   });
+
+  attachUnlock();
+
+  function attachUnlock() {
+    const h1 = target.querySelector('.brand h1');
+    if (!h1 || h1.dataset.unlockBound) return;
+    h1.dataset.unlockBound = '1';
+    h1.style.cursor = 'default';
+    let taps = 0;
+    let firstAt = 0;
+    h1.addEventListener('click', () => {
+      const now = Date.now();
+      if (now - firstAt > 3000) {
+        taps = 0;
+        firstAt = now;
+      }
+      taps++;
+      if (taps >= 7) {
+        taps = 0;
+        location.hash = '#sutradhara';
+      }
+    });
+  }
 
   installListener = () => renderShell({ available: false, max: 0, active: 0 });
   window.addEventListener('rr:install-available', installListener);
