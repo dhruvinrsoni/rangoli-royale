@@ -7,7 +7,8 @@ export default async function handler(req, res) {
   try {
     await ensureSchema();
     const active = await activeRoomCount();
-    ok(res, { ok: true, active, max: getMaxRooms() });
+    const max = await getMaxRooms();
+    ok(res, { ok: true, active, max });
   } catch (e) {
     console.error('[health]', e);
     err(res, 500, 'INTERNAL', 'Backend unavailable');

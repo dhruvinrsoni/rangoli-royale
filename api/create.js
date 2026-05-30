@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     if (!setup || !clientId) return err(res, 400, 'BAD_REQUEST', 'setup + clientId required');
 
     const active = await activeRoomCount();
-    const max = getMaxRooms();
+    const max = await getMaxRooms();
     if (active >= max) {
       throw new RoomError('CAPACITY', `All ${max} rooms in use. Try again in a few minutes or start a local game.`);
     }
