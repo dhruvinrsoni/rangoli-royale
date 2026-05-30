@@ -53,7 +53,8 @@ function renderLogin(message = '') {
       <label class="join-field">
         <span>PIN${pinHintLabel()}</span>
         <div class="pin-input-wrap">
-          <input type="password" name="pin" autocomplete="off" required minlength="6" autofocus>
+          <input type="password" name="pin" autocomplete="off" required minlength="6"
+                 inputmode="numeric" pattern="[0-9]+" autofocus>
           <button type="button" class="pin-toggle" id="pin-toggle" aria-label="Show or hide PIN">
             <span class="pin-toggle-eye" aria-hidden="true">show</span>
           </button>
@@ -255,7 +256,7 @@ function renderDashboard() {
     <header class="brand admin-brand">
       <div>
         <h1>Sūtradhāra</h1>
-        <p class="tagline">Rangoli Royale control room${pinModeHint ? ` · ${pinModeHint}-PIN mode` : ''}${currentStats?.hasPrefix ? ' · BIJA bound' : ''}</p>
+        <p class="tagline">Rangoli Royale control room${pinModeHint ? ` · ${pinModeHint}-PIN mode` : ''}${currentStats?.hasPrefix ? ' · BEEJA bound' : ''}</p>
       </div>
       <div class="admin-actions">
         <button type="button" id="refresh-all" class="ghost">↻ Refresh</button>
