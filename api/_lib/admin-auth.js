@@ -6,13 +6,13 @@ const PBKDF2_ITER = 120000;
 const PBKDF2_KEYLEN = 32;
 const PBKDF2_DIGEST = 'sha256';
 
-export function hashPin(pin) {
+export function hashPin(pin, prefix = '') {
   const salt = randomBytes(16);
-  const hash = pbkdf2Sync(pin, salt, PBKDF2_ITER, PBKDF2_KEYLEN, PBKDF2_DIGEST);
+  const hash = pbkdf2Sync(prefix + pin, salt, PBKDF2_ITER, PBKDF2_KEYLEN, PBKDF2_DIGEST);
   return `${salt.toString('hex')}:${hash.toString('hex')}`;
 }
 
-export function verifyPin(pin, stored) {
+export function verifyPin(pin, stored, prefix = '') {
   if (!stored || typeof stored !== 'string') return false;
   const [saltHex, hashHex] = stored.split(':');
   if (!saltHex || !hashHex) return false;
@@ -21,7 +21,7 @@ export function verifyPin(pin, stored) {
     salt = Buffer.from(saltHex, 'hex');
     expected = Buffer.from(hashHex, 'hex');
   } catch { return false; }
-  const actual = pbkdf2Sync(pin, salt, PBKDF2_ITER, PBKDF2_KEYLEN, PBKDF2_DIGEST);
+  const actual = pbkdf2Sync(prefix + pin, salt, PBKDF2_ITER, PBKDF2_KEYLEN, PBKDF2_DIGEST);
   if (actual.length !== expected.length) return false;
   return timingSafeEqual(actual, expected);
 }

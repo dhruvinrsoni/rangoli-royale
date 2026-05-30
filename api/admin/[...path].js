@@ -7,28 +7,59 @@ import { ok, err, readBody, cors } from '../_lib/http.js';
 import { normalizeCode, nowMs } from '../_lib/room-logic.js';
 
 const MAX_FAILS_PER_HOUR = 5;
-const PIN_DAILY_SUFFIX_LEN = 2;
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
-function expectedDailySuffix() {
-  const istOffsetMs = 5.5 * 60 * 60 * 1000;
-  const shifted = new Date(Date.now() + istOffsetMs);
-  const day = shifted.getUTCDate();
-  return String(day).padStart(PIN_DAILY_SUFFIX_LEN, '0');
+function pinMode() {
+  const raw = (process.env.ADMIN_PIN_MODE || '').toLowerCase().trim();
+  if (raw === 'day' || raw === 'daily' || raw === '1') return 'day';
+  if (raw === 'hour' || raw === 'hourly') return 'hour';
+  return 'static';
 }
 
-function pinDailyEnabled() {
-  return (process.env.ADMIN_PIN_DAILY || '').trim() === '1';
+function suffixLength() {
+  return { static: 0, day: 2, hour: 4 }[pinMode()];
+}
+
+function istDate(offsetMs = 0) {
+  return new Date(Date.now() + IST_OFFSET_MS + offsetMs);
+}
+
+function dayPart(d) { return String(d.getUTCDate()).padStart(2, '0'); }
+function hourPart(d) { return String(d.getUTCHours()).padStart(2, '0'); }
+
+function validSuffixes() {
+  const mode = pinMode();
+  if (mode === 'static') return [''];
+  if (mode === 'day') return [dayPart(istDate())];
+  if (mode === 'hour') {
+    const now = istDate();
+    const prev = istDate(-60 * 60 * 1000);
+    return [dayPart(now) + hourPart(now), dayPart(prev) + hourPart(prev)];
+  }
+  return [''];
 }
 
 function stripDailySuffix(submitted) {
-  if (!pinDailyEnabled()) return { ok: true, pin: submitted };
-  if (typeof submitted !== 'string' || submitted.length <= PIN_DAILY_SUFFIX_LEN) {
-    return { ok: false };
-  }
-  const suffix = submitted.slice(-PIN_DAILY_SUFFIX_LEN);
-  const corePin = submitted.slice(0, -PIN_DAILY_SUFFIX_LEN);
-  if (suffix !== expectedDailySuffix()) return { ok: false };
+  const mode = pinMode();
+  if (mode === 'static') return { ok: true, pin: submitted };
+  const len = suffixLength();
+  if (typeof submitted !== 'string' || submitted.length <= len) return { ok: false };
+  const suffix = submitted.slice(-len);
+  const corePin = submitted.slice(0, -len);
+  const valid = validSuffixes();
+  if (!valid.includes(suffix)) return { ok: false };
   return { ok: true, pin: corePin };
+}
+
+function secretPrefix() {
+  return process.env.BIJA || '';
+}
+
+function modeLabel() {
+  const m = pinMode();
+  if (m === 'day') return 'daily';
+  if (m === 'hour') return 'hourly';
+  return null;
 }
 
 async function dispatch(req, res, path) {
@@ -108,7 +139,7 @@ async function handleLogin(req, res) {
     return err(res, 401, 'UNAUTHORIZED', 'Wrong PIN');
   }
 
-  const valid = verifyPin(stripped.pin, storedHash);
+  const valid = verifyPin(stripped.pin, storedHash, secretPrefix());
   if (!valid) {
     await q`INSERT INTO admin_failed_logins (ip) VALUES (${ip})`;
     return err(res, 401, 'UNAUTHORIZED', 'Wrong PIN');
@@ -119,7 +150,7 @@ async function handleLogin(req, res) {
 
   const cookieValue = issueCookieValue(secret);
   res.setHeader('Set-Cookie', cookieHeader(cookieValue));
-  ok(res, { ok: true, dailyMode: pinDailyEnabled() });
+  ok(res, { ok: true, mode: modeLabel(), hasPrefix: !!secretPrefix() });
 }
 
 async function handleLogout(req, res) {
@@ -138,7 +169,7 @@ async function handleLogout(req, res) {
 async function handleMe(req, res) {
   try {
     const session = requireAdmin(req);
-    ok(res, { ok: true, expiresAt: session.expiry * 1000, dailyMode: pinDailyEnabled() });
+    ok(res, { ok: true, expiresAt: session.expiry * 1000, mode: modeLabel(), hasPrefix: !!secretPrefix() });
   } catch (e) {
     if (e instanceof AdminError) return err(res, e.code === 'NO_CONFIG' ? 503 : 401, e.code, e.message);
     throw e;
@@ -218,8 +249,9 @@ async function getStats(req, res) {
     failedLogins24h: failedRecent[0]?.n ?? 0,
     recentAudit,
     config,
-    dailyMode: pinDailyEnabled(),
-    version: '0.3.1',
+    mode: modeLabel(),
+    hasPrefix: !!secretPrefix(),
+    version: '0.3.2',
   });
 }
 

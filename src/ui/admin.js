@@ -33,7 +33,13 @@ function fmtTs(ts) {
   return d.toLocaleString();
 }
 
-let dailyModeHint = false;
+let pinModeHint = null;
+
+function pinHintLabel() {
+  if (pinModeHint === 'day') return ' (+ today\'s DD)';
+  if (pinModeHint === 'hourly') return ' (+ DDHH today, IST)';
+  return '';
+}
 
 function renderLogin(message = '') {
   root.innerHTML = `
@@ -43,7 +49,7 @@ function renderLogin(message = '') {
     </header>
     <form id="admin-login" class="admin-login">
       <label class="join-field">
-        <span>PIN${dailyModeHint ? ' (with today\'s suffix)' : ''}</span>
+        <span>PIN${pinHintLabel()}</span>
         <input type="password" name="pin" autocomplete="off" required minlength="6" autofocus>
       </label>
       <div class="setup-actions">
@@ -61,7 +67,7 @@ function renderLogin(message = '') {
     btn.textContent = 'Signing in…';
     try {
       const resp = await api('/api/admin/login', { method: 'POST', body: { pin } });
-      dailyModeHint = !!resp.dailyMode;
+      pinModeHint = resp.mode || null;
       startDashboard();
     } catch (err) {
       renderLogin(err.message || 'Login failed');
@@ -232,7 +238,7 @@ function renderDashboard() {
     <header class="brand admin-brand">
       <div>
         <h1>Sūtradhāra</h1>
-        <p class="tagline">Rangoli Royale control room${dailyModeHint ? ' · daily-PIN mode' : ''}</p>
+        <p class="tagline">Rangoli Royale control room${pinModeHint ? ` · ${pinModeHint}-PIN mode` : ''}${currentStats?.hasPrefix ? ' · BIJA bound' : ''}</p>
       </div>
       <div class="admin-actions">
         <button type="button" id="refresh-all" class="ghost">↻ Refresh</button>
@@ -335,7 +341,7 @@ export async function mount(target) {
   root = target;
   try {
     const me = await api('/api/admin/me');
-    dailyModeHint = !!me.dailyMode;
+    pinModeHint = me.mode || null;
     startDashboard();
   } catch (err) {
     if (err.code === 'NO_CONFIG') {
