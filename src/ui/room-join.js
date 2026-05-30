@@ -2,7 +2,7 @@ import { joinRoom, getRememberedName } from '../lib/online-session.js';
 
 export function mount(target) {
   const params = new URLSearchParams(location.hash.split('?')[1] || '');
-  const prefillCode = (params.get('code') || '').toUpperCase();
+  const prefillCode = (params.get('code') || '').replace(/[^0-9]/g, '');
 
   target.innerHTML = `
     <header class="brand">
@@ -13,8 +13,9 @@ export function mount(target) {
     <form id="join-form" class="join-form" novalidate>
       <label class="join-field">
         <span>Room code</span>
-        <input type="text" name="code" placeholder="e.g. K7Q2HFXN" maxlength="8"
-               autocomplete="off" autocapitalize="characters" spellcheck="false"
+        <input type="text" name="code" placeholder="e.g. 47281390" maxlength="8"
+               autocomplete="off" inputmode="numeric" pattern="[0-9]{6,8}"
+               spellcheck="false"
                value="${prefillCode}" required>
       </label>
       <label class="join-field">
@@ -33,7 +34,7 @@ export function mount(target) {
   const errEl = target.querySelector('#form-error');
 
   form.elements.code.addEventListener('input', (e) => {
-    e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 8);
   });
 
   form.addEventListener('submit', async (e) => {

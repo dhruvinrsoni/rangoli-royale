@@ -1,10 +1,11 @@
 import { applyMove, undoLastMove } from '../../src/lib/turn-engine.js';
 
-const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+const ALPHABET = '0123456789';
+const CODE_LENGTH = 8;
 
 export function generateCode() {
   let out = '';
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < CODE_LENGTH; i++) {
     out += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
   }
   return out;
@@ -12,7 +13,7 @@ export function generateCode() {
 
 export function normalizeCode(raw) {
   if (typeof raw !== 'string') return '';
-  return raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+  return raw.replace(/[^0-9]/g, '').slice(0, CODE_LENGTH);
 }
 
 export function nowMs() {
