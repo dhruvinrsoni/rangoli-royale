@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-05-30
+
+### Fixed
+- **Vercel Hobby 12-function build limit.** Consolidated 7 separate admin endpoint files into a single catch-all `api/admin/[...path].js` that dispatches by path + method. Total functions: 15 → 9. Builds now succeed on Hobby tier.
+
+### Changed — Admin obscurity
+- **Hidden route renamed** from `#admin` to `#sutradhara` (सूत्रधार — "holder of the thread", the classical Sanskrit theater director). Less guessable to drive-by attackers. Even if found, `NO_CONFIG` 503 is the worst they'll see when env vars aren't set.
+- **Hidden unlock trigger**: tap the home-screen title "Rangoli Royale" **7 times within 3 seconds** to navigate to Sūtradhāra. Not linked anywhere in the UI.
+- Admin login form re-themed: "Sūtradhāra · The one who holds the thread"
+
+### Added — Optional daily-rotating PIN
+- Set env var `ADMIN_PIN_DAILY=1` to enable day-rotation. The expected PIN at login is `<staticPart><DD>` where `DD` is today's day-of-month in IST (e.g., on the 30th, type `myPin30`).
+- A shoulder-surfed PIN works for at most ~24h. Attacker who guesses the format must brute-force the right day suffix while hitting the rate limit (5 attempts/hour → ~7 hours for all 31 days).
+- Static-PIN mode (default) still works exactly as before when env var is unset.
+
+### Changed
+- Cache → v20
+
 ## [0.3.0] — 2026-05-30
 
 ### Added — Admin dashboard
