@@ -50,7 +50,12 @@ function renderLogin(message = '') {
     <form id="admin-login" class="admin-login">
       <label class="join-field">
         <span>PIN${pinHintLabel()}</span>
-        <input type="password" name="pin" autocomplete="off" required minlength="6" autofocus>
+        <div class="pin-input-wrap">
+          <input type="password" name="pin" autocomplete="off" required minlength="6" autofocus>
+          <button type="button" class="pin-toggle" id="pin-toggle" aria-label="Show or hide PIN">
+            <span class="pin-toggle-eye" aria-hidden="true">show</span>
+          </button>
+        </div>
       </label>
       <div class="setup-actions">
         <a href="#home" class="cancel">Cancel</a>
@@ -59,6 +64,16 @@ function renderLogin(message = '') {
       ${message ? `<p class="form-error">${message}</p>` : ''}
     </form>
   `;
+
+  const pinInput = root.querySelector('input[name="pin"]');
+  const toggleBtn = root.querySelector('#pin-toggle');
+  toggleBtn?.addEventListener('click', () => {
+    const showing = pinInput.type === 'text';
+    pinInput.type = showing ? 'password' : 'text';
+    toggleBtn.querySelector('.pin-toggle-eye').textContent = showing ? 'show' : 'hide';
+    pinInput.focus();
+  });
+
   root.querySelector('#admin-login').addEventListener('submit', async (e) => {
     e.preventDefault();
     const pin = e.target.elements.pin.value;

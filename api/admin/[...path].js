@@ -111,6 +111,19 @@ export default async function handler(req, res) {
 async function handleLogin(req, res) {
   const storedHash = process.env.ADMIN_PIN_HASH;
   const secret = process.env.ADMIN_COOKIE_SECRET;
+  console.log('[admin/login] env present', {
+    hasPinHash: !!storedHash,
+    pinHashLen: storedHash?.length ?? 0,
+    pinHashHead: storedHash?.slice(0, 6) ?? '',
+    pinHashTail: storedHash?.slice(-6) ?? '',
+    hasCookieSecret: !!secret,
+    cookieSecretLen: secret?.length ?? 0,
+    hasBija: !!process.env.BIJA,
+    bijaLen: (process.env.BIJA || '').length,
+    pinMode: process.env.ADMIN_PIN_MODE ?? '(unset)',
+    resolvedMode: pinMode(),
+    nodeVersion: process.version,
+  });
   if (!storedHash || !secret) {
     return err(res, 503, 'NO_CONFIG', 'Admin not configured. Set ADMIN_PIN_HASH and ADMIN_COOKIE_SECRET.');
   }
@@ -120,8 +133,18 @@ async function handleLogin(req, res) {
 
   const body = await readBody(req);
   let rawPin = body?.pin;
-  if (typeof rawPin !== 'string' || !rawPin.trim()) return err(res, 400, 'BAD_REQUEST', 'pin required');
+  if (typeof rawPin !== 'string' || !rawPin.trim()) {
+    console.log('[admin/login] empty pin body');
+    return err(res, 400, 'BAD_REQUEST', 'pin required');
+  }
+  const rawPinUntrimmed = rawPin;
   rawPin = rawPin.trim();
+  console.log('[admin/login] pin received', {
+    rawLen: rawPinUntrimmed.length,
+    trimmedLen: rawPin.length,
+    hadWhitespace: rawPinUntrimmed.length !== rawPin.length,
+    last6: rawPin.slice(-6),
+  });
 
   const ip = getClientIp(req);
   const q = sql();
@@ -130,35 +153,46 @@ async function handleLogin(req, res) {
     SELECT count(*)::int AS n FROM admin_failed_logins
     WHERE ip = ${ip} AND attempted_at > now() - interval '1 hour'
   `;
-  if ((failed[0]?.n ?? 0) >= MAX_FAILS_PER_HOUR) {
+  const failCount = failed[0]?.n ?? 0;
+  console.log('[admin/login] rate-limit state', { ip, recentFails: failCount, threshold: MAX_FAILS_PER_HOUR });
+  if (failCount >= MAX_FAILS_PER_HOUR) {
     return err(res, 429, 'RATE_LIMITED', 'Too many attempts. Try again in an hour.');
   }
 
+  const len = suffixLength();
+  const valid_suffixes = validSuffixes();
+  const submittedSuffix = len > 0 ? rawPin.slice(-len) : '';
+  console.log('[admin/login] suffix check', {
+    mode: pinMode(),
+    suffixLen: len,
+    submittedSuffix,
+    validSuffixes: valid_suffixes,
+    utcNow: new Date().toISOString(),
+    istNow: new Date(Date.now() + IST_OFFSET_MS).toISOString().replace('Z', '+0530'),
+  });
+
   const stripped = stripDailySuffix(rawPin);
   if (!stripped.ok) {
-    const len = suffixLength();
-    console.log('[admin/login] suffix mismatch', {
-      mode: pinMode(),
-      submittedLen: rawPin.length,
-      submittedSuffix: rawPin.slice(-len),
-      validSuffixes: validSuffixes(),
-      utcNow: new Date().toISOString(),
-    });
     await q`INSERT INTO admin_failed_logins (ip) VALUES (${ip})`;
-    return err(res, 401, 'UNAUTHORIZED', `Wrong PIN — suffix does not match today's IST date+hour (expected one of ${JSON.stringify(validSuffixes())}, got ${JSON.stringify(rawPin.slice(-len))})`);
+    return err(res, 401, 'SUFFIX_MISMATCH', `Wrong PIN suffix (expected ${JSON.stringify(valid_suffixes)}, got ${JSON.stringify(submittedSuffix)})`);
   }
 
-  const valid = verifyPin(stripped.pin, storedHash, secretPrefix());
+  const prefix = secretPrefix();
+  console.log('[admin/login] hash check', {
+    coreLen: stripped.pin.length,
+    corePinHead: stripped.pin.slice(0, 3),
+    corePinTail: stripped.pin.slice(-3),
+    hasPrefix: !!prefix,
+    prefixLen: prefix.length,
+  });
+  const valid = verifyPin(stripped.pin, storedHash, prefix);
   if (!valid) {
-    console.log('[admin/login] hash mismatch', {
-      coreLen: stripped.pin.length,
-      hasPrefix: !!secretPrefix(),
-      utcNow: new Date().toISOString(),
-    });
+    console.log('[admin/login] HASH MISMATCH — stored ADMIN_PIN_HASH does not correspond to (BIJA + corePIN)');
     await q`INSERT INTO admin_failed_logins (ip) VALUES (${ip})`;
-    return err(res, 401, 'UNAUTHORIZED', 'Wrong PIN — suffix was correct but the base PIN does not match the stored hash');
+    return err(res, 401, 'HASH_MISMATCH', 'Suffix correct but base PIN does not match stored hash');
   }
 
+  console.log('[admin/login] SUCCESS');
   await q`DELETE FROM admin_failed_logins WHERE ip = ${ip}`;
   await q`INSERT INTO admin_audit (action, details, ip) VALUES ('login', '{}'::jsonb, ${ip})`;
 

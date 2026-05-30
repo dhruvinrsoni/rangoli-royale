@@ -16,6 +16,35 @@
   max-width: 360px;
   margin: 0 auto;
 }
+.pin-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.pin-input-wrap input {
+  flex: 1;
+  padding-right: 70px;
+}
+.pin-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: calc(100% - 8px);
+  padding: 0 12px;
+  background: var(--rr-bg-card);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--rr-radius-sm);
+  color: var(--rr-text-muted);
+  font-size: var(--rr-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.pin-toggle:hover {
+  color: var(--rr-text);
+  border-color: var(--rr-accent);
+}
 
 .admin-stats {
   display: grid;
