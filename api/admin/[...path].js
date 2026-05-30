@@ -6,7 +6,7 @@ import {
 import { ok, err, readBody, cors } from '../_lib/http.js';
 import { normalizeCode, nowMs } from '../_lib/room-logic.js';
 
-const MAX_FAILS_PER_HOUR = 5;
+const MAX_FAILS_PER_HOUR = 15;
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
 function pinMode() {
@@ -52,7 +52,7 @@ function stripDailySuffix(submitted) {
 }
 
 function secretPrefix() {
-  return process.env.BIJA || '';
+  return process.env.BEEJA || process.env.BIJA || '';
 }
 
 function modeLabel() {
@@ -116,7 +116,7 @@ export default async function handler(req, res) {
     queryPath: req.query?.path ?? null,
     resolvedPath: path,
     pinMode: pinMode(),
-    bijaPresent: !!process.env.BIJA,
+    beejaPresent: !!(process.env.BEEJA || process.env.BIJA),
   };
   console.log('[admin] dispatch', debugCtx);
 
@@ -144,8 +144,8 @@ async function handleLogin(req, res) {
     pinHashTail: storedHash?.slice(-6) ?? '',
     hasCookieSecret: !!secret,
     cookieSecretLen: secret?.length ?? 0,
-    hasBija: !!process.env.BIJA,
-    bijaLen: (process.env.BIJA || '').length,
+    hasBeeja: !!(process.env.BEEJA || process.env.BIJA),
+    beejaLen: (process.env.BEEJA || process.env.BIJA || '').length,
     pinMode: process.env.ADMIN_PIN_MODE ?? '(unset)',
     resolvedMode: pinMode(),
     nodeVersion: process.version,
@@ -213,7 +213,7 @@ async function handleLogin(req, res) {
   });
   const valid = verifyPin(stripped.pin, storedHash, prefix);
   if (!valid) {
-    console.log('[admin/login] HASH MISMATCH — stored ADMIN_PIN_HASH does not correspond to (BIJA + corePIN)');
+    console.log('[admin/login] HASH MISMATCH — stored ADMIN_PIN_HASH does not correspond to (BEEJA + corePIN)');
     await q`INSERT INTO admin_failed_logins (ip) VALUES (${ip})`;
     return err(res, 401, 'HASH_MISMATCH', 'Suffix correct but base PIN does not match stored hash');
   }
