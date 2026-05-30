@@ -16,6 +16,11 @@
   max-width: 360px;
   margin: 0 auto;
 }
+.admin-login .join-field input {
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: inherit;
+}
 .pin-input-wrap {
   position: relative;
   display: flex;
