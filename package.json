@@ -1,6 +1,6 @@
 {
   "name": "rangoli-royale",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "type": "module",
   "description": "A 2-team strategy game on a rangoli dot grid — pass-around PWA",

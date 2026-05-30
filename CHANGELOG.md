@@ -6,6 +6,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-05-30
+
+### Added — Hardened admin secrets
+- **New env var `BIJA`** (बीज, "seed") — a secret prefix mixed into the PIN before hashing, server-side only. User never types it. Code never references its value (only its existence). If `BIJA` and `ADMIN_PIN_HASH` leak independently, neither alone is enough to compute the PIN.
+- **PIN mode `hour`** via `ADMIN_PIN_MODE=hour` — user appends `DDHH` in IST (e.g., `mypin3014` on May 30 at 14:xx IST). Tighter rotation than daily — shoulder-surfed PIN works for at most ~1-2 hours.
+- **Hour-mode slop**: server accepts current hour and previous hour as valid, so a PIN typed late in the previous hour still works for ~60-second clock drift.
+- `verifyPin(pin, stored, prefix)` and `hashPin(pin, prefix)` now take an optional prefix parameter.
+- `hash-admin-pin.mjs` prompts for the BIJA prefix and prints all three env-var values together.
+
+### Changed
+- `ADMIN_PIN_MODE` now supports `static` (default, unset), `day` (2-char DD suffix), `hour` (4-char DDHH suffix). Old `ADMIN_PIN_DAILY=1` flag is mapped to `day` for backward compat.
+- Login response and stats endpoint expose `mode` and `hasPrefix` flags so the dashboard can label what's active.
+- Cache → v21
+
+### Security model recap
+| Secret | Where | Purpose |
+|---|---|---|
+| `ADMIN_PIN_HASH` | Vercel env | `PBKDF2(BIJA + pin, salt)` — never reversible to PIN without both inputs |
+| `BIJA` | Vercel env | Secret prefix; without it, captured PIN_HASH alone is useless |
+| `ADMIN_COOKIE_SECRET` | Vercel env | HMAC signing key for session cookies |
+| `ADMIN_PIN_MODE` | Vercel env (optional) | `static`/`day`/`hour` — rotates required suffix |
+| PIN itself | Owner's memory only | Never stored anywhere |
+
 ## [0.3.1] — 2026-05-30
 
 ### Fixed
