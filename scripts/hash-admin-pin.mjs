@@ -25,12 +25,12 @@ function prompt(question) {
 console.log('\nRangoli Royale — Sūtradhāra secrets generator\n');
 
 console.log('This produces three env-var values for Vercel:');
-console.log('  ADMIN_PIN_HASH      → PBKDF2-SHA256 hash of (BIJA + your PIN)');
+console.log('  ADMIN_PIN_HASH      → PBKDF2-SHA256 hash of (BEEJA + your PIN)');
 console.log('  ADMIN_COOKIE_SECRET → 32 bytes of randomness for HMAC-signed cookies');
-console.log('  BIJA                → secret prefix (Sanskrit: बीज, "seed") that is mixed into the hash on the server only');
-console.log('\nIf BIJA leaks but ADMIN_PIN_HASH does not (or vice versa), the attacker still cannot derive your PIN.\n');
+console.log('  BEEJA                → secret prefix (Sanskrit: बीज, "seed") that is mixed into the hash on the server only');
+console.log('\nIf BEEJA leaks but ADMIN_PIN_HASH does not (or vice versa), the attacker still cannot derive your PIN.\n');
 
-const prefix = (await prompt('BIJA — secret prefix (any string, kept server-only). Press Enter to skip: ')).trim();
+const prefix = (await prompt('BEEJA — secret prefix (any string, kept server-only). Press Enter to skip: ')).trim();
 const pin = (await prompt('Your admin PIN (12+ chars recommended): ')).trim();
 
 if (!pin || pin.length < 6) {
@@ -45,7 +45,7 @@ console.log('\nGenerated hash for: prefix=' + JSON.stringify(prefix) + ', pin=' 
 console.log('\n--- Paste these into Vercel → Project Settings → Environment Variables ---\n');
 console.log('ADMIN_PIN_HASH=' + pinHash);
 console.log('ADMIN_COOKIE_SECRET=' + cookieSecret);
-if (prefix) console.log('BIJA=' + prefix);
+if (prefix) console.log('BEEJA=' + prefix);
 console.log('\nOptional: rotating PIN mode. Pick one if you want a daily/hourly-rotating suffix:');
 console.log('  ADMIN_PIN_MODE=day   → append today\'s day-of-month (DD) when logging in    e.g.  myPin30');
 console.log('  ADMIN_PIN_MODE=hour  → append today\'s day + IST hour (DDHH)               e.g.  myPin3014');

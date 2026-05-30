@@ -32,7 +32,7 @@ console.log('Valid day suffix:    ', dd(now));
 console.log('');
 
 const mode = ((await prompt('Mode you set in Vercel (static / day / hour): ')).trim().toLowerCase()) || 'static';
-const prefix = (await prompt('BIJA prefix (Enter for none): ')).trim();
+const prefix = (await prompt('BEEJA prefix (Enter for none): ')).trim();
 const fullPin = (await prompt('Full PIN as you would type at login: ')).trim();
 const storedHash = (await prompt('Paste your ADMIN_PIN_HASH from Vercel: ')).trim();
 
@@ -77,6 +77,6 @@ if (suffixOk && hashOk) {
 } else {
   console.log('FAIL.');
   if (!suffixOk) console.log('  - Suffix wrong. Re-check the IST clock vs what you typed.');
-  if (!hashOk) console.log('  - Core PIN does not hash to the stored value. Either you mistyped the PIN, the BIJA prefix differs, or the hash was generated for a different PIN/prefix combo.');
+  if (!hashOk) console.log('  - Core PIN does not hash to the stored value. Either you mistyped the PIN, the BEEJA prefix differs, or the hash was generated for a different PIN/prefix combo.');
 }
 console.log('');
