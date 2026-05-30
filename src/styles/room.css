@@ -28,7 +28,7 @@
   letter-spacing: 0.06em;
 }
 
-.join-field input {
+.join-field input[name="code"] {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.15em;
   text-transform: uppercase;
