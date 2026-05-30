@@ -2,89 +2,135 @@
 
 > Draw the line. Hold the grid.
 
-A two-team strategy game on an Indian rangoli/kolam dot grid. Pass the device. Take turns. Block your rival.
+A two-team strategy game on an Indian rangoli/kolam dot grid. Pass the device, or play online with friends.
 
-**Live:** https://dhruvinrsoni.github.io/rangoli-royale/
+**Offline build:** https://dhruvinrsoni.github.io/rangoli-royale/
+**Online build (Vercel):** https://rangoli-royale.vercel.app/
 
 ---
 
 ## What it is
 
-A grid of dots in two alternating colors. Players sit in a circle in alternating team order and pass one device around. Each turn, the active player draws **one** straight line between two same-color dots of their team — horizontal or vertical. The geometry creates strategic blocking: a horizontal line of one color cuts through where the other team might have wanted a vertical line.
+Each player draws **one** straight line per turn between two same-color dots of their team. The geometry creates blocking — a horizontal line of one color cuts through where the other team might have wanted a vertical line.
 
-Two win modes ship in v1, selectable at setup:
+Two win modes (chosen at setup):
 
-- **Longest single line** — longest unbroken straight chain of your team's edges.
-- **Largest connected tree** — largest connected subgraph of dots joined by your team's edges.
+- **Longest single line** — longest unbroken straight chain in your team's graph.
+- **Largest connected tree** — largest connected subgraph of dots.
 
-The game ends when neither team has a legal move, or when every legal edge is claimed.
+Game ends when neither team can move.
 
 ---
 
-## Why a PWA
+## Two flavours, same engine
 
-- One device, pass it around — works exactly like the paper version.
-- Install on phone, play offline at a wedding / pooja / car ride / Diwali party.
-- Zero account, zero login, zero telemetry — every game stays on the device.
-- All settings, in-progress games, and history live in `localStorage`.
+| | GitHub Pages | Vercel |
+|---|---|---|
+| URL | `dhruvinrsoni.github.io/rangoli-royale/` | `rangoli-royale.vercel.app/` |
+| Mode | Offline-only, pass-the-device | Adds online rooms (8-digit numeric codes) |
+| Backend | none | Vercel functions + Neon Postgres |
+| Sync | n/a | HTTP long-polling, sub-second lag |
+| Admin dashboard | n/a | `/#sutradhara` (PIN-gated) |
+
+If Vercel ever breaks, GitHub Pages still works.
 
 ---
 
 ## Run locally
 
-No build step. Pick whichever server you have handy:
+No build step.
 
 ```bash
-# 1. npm script (uses Python under the hood — Python ships with most dev setups)
-npm run dev
-# → http://localhost:8765
+npm run dev               # python -m http.server 8765
+# or
+npm run dev:node          # npx serve
 
-# 2. or Node-based static server (downloads `serve` via npx on first run)
-npm run dev:node
-
-# 3. or run Python directly without npm
-python -m http.server 8765
+open http://localhost:8765/
+open http://localhost:8765/tests.html   # engine assertions
 ```
 
-Then in another tab, open the engine tests at http://localhost:8765/tests.html to verify the pure engine on your machine.
-
-Opening `index.html` directly in a browser also works for quick checks, but service worker registration is skipped on `file://`.
+ES modules + SVG + CSS. Zero npm deps for the game itself; `@neondatabase/serverless` only used by the Vercel functions.
 
 ---
 
-## Game engine tests
+## Architecture
 
-Open [tests.html](tests.html) in a browser. All assertions log to the console.
-
----
-
-## Tech
-
-Vanilla HTML + CSS + JS. ES modules. SVG grid. CSS custom properties for theming. No bundler, no framework, no npm dependencies. Designed so the v1 engine is a pure deterministic state machine — v2 (online multiplayer via Vercel/Supabase) wraps it without rewrite.
-
-| Area | Where |
+| Area | Path |
 |---|---|
 | Pure game engine | `src/lib/{geometry,turn-engine,scoring}.js` |
-| Storage abstraction | `src/lib/storage.js` |
-| UI screens | `src/ui/{home,setup,game,endgame,settings,stats,howto}.js` |
-| Feature flags | `src/config/features.js` |
-| Add-ons (timer, undo, haptic, etc.) | `src/features/*/` |
-| Rules text | [docs/rules.md](docs/rules.md) |
-| Deployment | [docs/deployment.md](docs/deployment.md) |
+| Local storage | `src/lib/storage.js` |
+| Online session | `src/lib/online-session.js` (long-poll loop, persisted to localStorage) |
+| UI screens | `src/ui/{home,setup,game,endgame,settings,stats,howto,room-create,room-join,lobby,admin}.js` |
+| Vercel functions | `api/health.js`, `api/create.js`, `api/[code].js`, `api/[code]/{join,start,move,leave,give-up}.js`, `api/admin/[...path].js` |
+| Admin auth helpers | `api/_lib/admin-auth.js` (PBKDF2 + HMAC, zero npm deps) |
+| Rules text | `docs/rules.md` |
+| Deployment | `docs/deployment.md` |
+
+---
+
+## Online multiplayer (Vercel build)
+
+- Create a room → 8-digit numeric code → share it
+- Friends paste the code → enter a name → join
+- Host taps Start → game flows like local, but each move syncs over HTTP long-poll
+- **Cap**: configurable concurrent rooms (default 10) via `MAX_ROOMS` env var or admin dashboard override
+- **Lifecycle**: rooms auto-expire after 30 min of idleness (5 min after game ends); no cron job
+- **Auto-fallback**: if the backend is unreachable, online buttons hide and game still runs locally
+
+---
+
+## Admin (Sūtradhāra)
+
+Hidden route `/#sutradhara`. To reach it without typing the URL: **tap the home title 7 times within 3 seconds**.
+
+### One-time setup
+
+```bash
+node scripts/hash-admin-pin.mjs
+```
+
+Type a BEEJA prefix (or press Enter to skip) and your PIN. Script prints env-var values. Paste into Vercel → Settings → Environment Variables:
+
+```
+ADMIN_PIN_HASH=...
+ADMIN_COOKIE_SECRET=...
+BEEJA=...                  (optional secret prefix)
+ADMIN_PIN_MODE=hour        (optional: static / day / hour)
+MAX_ROOMS=10               (optional: concurrent room cap)
+```
+
+Redeploy. Visit `#sutradhara`, log in.
+
+### Local self-test
+
+```bash
+node scripts/test-admin-pin.mjs
+```
+
+Tells you whether the PIN you're about to type would pass — without burning rate-limit attempts on the live server.
+
+### What admin can do
+- View live rooms (code, status, players, age, TTL)
+- Delete or force-end any room
+- Wipe all rooms
+- Override `MAX_ROOMS` from the dashboard
+- View server stats + recent admin actions
+
+### Security
+- PBKDF2-SHA256 hashed PIN (120k iterations), HMAC-signed `HttpOnly Secure SameSite=Strict` cookie, 4-hour auto-expiry
+- Rate limit: 15 failed logins per IP per hour → 429
+- Every admin action audited with IP + timestamp
+- Optional hour-rotating PIN suffix (`DDHH` in IST) so shoulder-surfed PINs expire ~1h later
 
 ---
 
 ## Deployment
 
-Push to `main` → GitHub Actions builds and deploys to GitHub Pages. Health check pings the live URL every 6 hours. Versioned releases are cut via manual workflow dispatch on `create-tag-release.yml`.
+Push to `main`:
+- GitHub Pages auto-builds & deploys (offline-only build)
+- Vercel auto-builds & deploys (online-enabled build, same source)
 
-See [docs/deployment.md](docs/deployment.md) for the full deploy / release / rollback flow.
-
----
-
-## How to play
-
-See [docs/rules.md](docs/rules.md) or tap **How to Play** from the home screen.
+See `docs/deployment.md` for the full deploy / release / rollback flow.
 
 ---
 
