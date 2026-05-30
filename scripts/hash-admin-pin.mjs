@@ -31,7 +31,7 @@ console.log('  BIJA                → secret prefix (Sanskrit: बीज, "seed
 console.log('\nIf BIJA leaks but ADMIN_PIN_HASH does not (or vice versa), the attacker still cannot derive your PIN.\n');
 
 const prefix = (await prompt('BIJA — secret prefix (any string, kept server-only). Press Enter to skip: ')).trim();
-const pin = await prompt('Your admin PIN (12+ chars recommended): ');
+const pin = (await prompt('Your admin PIN (12+ chars recommended): ')).trim();
 
 if (!pin || pin.length < 6) {
   console.error('\nPIN too short. Use 8+ characters.');
@@ -41,6 +41,7 @@ if (!pin || pin.length < 6) {
 const pinHash = hashWithPrefix(pin, prefix);
 const cookieSecret = randomBytes(32).toString('hex');
 
+console.log('\nGenerated hash for: prefix=' + JSON.stringify(prefix) + ', pin=' + JSON.stringify(pin) + ' (length ' + pin.length + ')');
 console.log('\n--- Paste these into Vercel → Project Settings → Environment Variables ---\n');
 console.log('ADMIN_PIN_HASH=' + pinHash);
 console.log('ADMIN_COOKIE_SECRET=' + cookieSecret);

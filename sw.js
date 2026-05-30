@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rangoli-royale-v21';
+const CACHE_NAME = 'rangoli-royale-v22';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

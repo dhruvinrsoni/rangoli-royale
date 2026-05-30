@@ -119,8 +119,9 @@ async function handleLogin(req, res) {
   await ensureAdminSchema();
 
   const body = await readBody(req);
-  const { pin: rawPin } = body || {};
-  if (!rawPin || typeof rawPin !== 'string') return err(res, 400, 'BAD_REQUEST', 'pin required');
+  let rawPin = body?.pin;
+  if (typeof rawPin !== 'string' || !rawPin.trim()) return err(res, 400, 'BAD_REQUEST', 'pin required');
+  rawPin = rawPin.trim();
 
   const ip = getClientIp(req);
   const q = sql();
@@ -135,14 +136,27 @@ async function handleLogin(req, res) {
 
   const stripped = stripDailySuffix(rawPin);
   if (!stripped.ok) {
+    const len = suffixLength();
+    console.log('[admin/login] suffix mismatch', {
+      mode: pinMode(),
+      submittedLen: rawPin.length,
+      submittedSuffix: rawPin.slice(-len),
+      validSuffixes: validSuffixes(),
+      utcNow: new Date().toISOString(),
+    });
     await q`INSERT INTO admin_failed_logins (ip) VALUES (${ip})`;
-    return err(res, 401, 'UNAUTHORIZED', 'Wrong PIN');
+    return err(res, 401, 'UNAUTHORIZED', `Wrong PIN — suffix does not match today's IST date+hour (expected one of ${JSON.stringify(validSuffixes())}, got ${JSON.stringify(rawPin.slice(-len))})`);
   }
 
   const valid = verifyPin(stripped.pin, storedHash, secretPrefix());
   if (!valid) {
+    console.log('[admin/login] hash mismatch', {
+      coreLen: stripped.pin.length,
+      hasPrefix: !!secretPrefix(),
+      utcNow: new Date().toISOString(),
+    });
     await q`INSERT INTO admin_failed_logins (ip) VALUES (${ip})`;
-    return err(res, 401, 'UNAUTHORIZED', 'Wrong PIN');
+    return err(res, 401, 'UNAUTHORIZED', 'Wrong PIN — suffix was correct but the base PIN does not match the stored hash');
   }
 
   await q`DELETE FROM admin_failed_logins WHERE ip = ${ip}`;
