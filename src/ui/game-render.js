@@ -53,10 +53,12 @@ function findClosestActiveEdge(px, py, grid, team, claimed) {
   return best;
 }
 
-export function renderGridSvg(state, grid) {
+export function renderGridSvg(state, grid, opts = {}) {
+  const { canInteract = true } = opts;
   const teams = state.setup.teams;
   const claimed = claimedEdges(state);
   const activeTeam = currentTeam(state, grid);
+  const interactiveTeam = canInteract ? activeTeam : null;
 
   const b = grid.bounds || {
     minX: 0, minY: 0,
@@ -117,32 +119,34 @@ export function renderGridSvg(state, grid) {
   svg.appendChild(claimedLayer);
   svg.appendChild(dotsLayer);
 
-  if (activeTeam) svg.classList.add('is-playable');
+  if (interactiveTeam) {
+    svg.classList.add('is-playable');
 
-  let hoveredEl = null;
-  const setHovered = (newEl) => {
-    if (hoveredEl === newEl) return;
-    if (hoveredEl) hoveredEl.classList.remove('is-hovered');
-    hoveredEl = newEl;
-    if (hoveredEl) hoveredEl.classList.add('is-hovered');
-  };
+    let hoveredEl = null;
+    const setHovered = (newEl) => {
+      if (hoveredEl === newEl) return;
+      if (hoveredEl) hoveredEl.classList.remove('is-hovered');
+      hoveredEl = newEl;
+      if (hoveredEl) hoveredEl.classList.add('is-hovered');
+    };
 
-  svg.addEventListener('pointermove', (e) => {
-    if (e.pointerType === 'touch') return;
-    const { x, y } = clientToSvg(svg, e.clientX, e.clientY);
-    const closest = findClosestActiveEdge(x, y, grid, activeTeam, claimed);
-    if (!closest) { setHovered(null); return; }
-    setHovered(ghostLayer.querySelector(`[data-edge="${closest.id}"]`));
-  });
-  svg.addEventListener('pointerleave', () => setHovered(null));
+    svg.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch') return;
+      const { x, y } = clientToSvg(svg, e.clientX, e.clientY);
+      const closest = findClosestActiveEdge(x, y, grid, interactiveTeam, claimed);
+      if (!closest) { setHovered(null); return; }
+      setHovered(ghostLayer.querySelector(`[data-edge="${closest.id}"]`));
+    });
+    svg.addEventListener('pointerleave', () => setHovered(null));
 
-  svg.addEventListener('click', async (e) => {
-    const { x, y } = clientToSvg(svg, e.clientX, e.clientY);
-    const closest = findClosestActiveEdge(x, y, grid, activeTeam, claimed);
-    if (!closest) return;
-    const gameMod = await import('./game.js');
-    gameMod._handleEdgeTap(closest.id);
-  });
+    svg.addEventListener('click', async (e) => {
+      const { x, y } = clientToSvg(svg, e.clientX, e.clientY);
+      const closest = findClosestActiveEdge(x, y, grid, interactiveTeam, claimed);
+      if (!closest) return;
+      const gameMod = await import('./game.js');
+      gameMod._handleEdgeTap(closest.id);
+    });
+  }
 
   return svg;
 }

@@ -160,7 +160,8 @@ function render() {
   `;
 
   const host = root.querySelector('#game-grid-host');
-  host.appendChild(renderGridSvg(state, grid));
+  const canInteract = !onlineActive() || isMyTurn();
+  host.appendChild(renderGridSvg(state, grid, { canInteract }));
 
   root.querySelector('#end-game').addEventListener('click', async () => {
     if (isOnline) {
