@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rangoli-royale-v25';
+const CACHE_NAME = 'rangoli-royale-v26';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -19,6 +19,7 @@ const ASSETS_TO_CACHE = [
   './src/lib/sync-adapter.js',
   './src/lib/online-session.js',
   './src/config/online.js',
+  './src/config/version.js',
   './src/config/features.js',
   './src/config/difficulty.js',
   './src/config/color-presets.js',
