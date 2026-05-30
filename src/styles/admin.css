@@ -1,0 +1,194 @@
+.admin-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rr-space-3);
+  flex-wrap: wrap;
+}
+.admin-actions {
+  display: flex;
+  gap: var(--rr-space-2);
+}
+
+.admin-login {
+  display: grid;
+  gap: var(--rr-space-4);
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--rr-space-2);
+  margin-bottom: var(--rr-space-4);
+}
+.admin-stat {
+  background: var(--rr-bg-card);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--rr-radius);
+  padding: var(--rr-space-3);
+  display: grid;
+  gap: 4px;
+}
+.admin-stat-label {
+  font-size: var(--rr-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rr-text-muted);
+}
+.admin-stat-value {
+  font-size: var(--rr-text-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.admin-stat-sub {
+  font-size: var(--rr-text-xs);
+  color: var(--rr-text-muted);
+}
+
+.admin-section {
+  background: var(--rr-bg-card);
+  border-radius: var(--rr-radius);
+  padding: var(--rr-space-4);
+  margin-bottom: var(--rr-space-4);
+}
+.admin-section h2 {
+  font-size: var(--rr-text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rr-text-muted);
+  margin: 0 0 var(--rr-space-3);
+}
+.admin-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rr-space-3);
+  margin-bottom: var(--rr-space-3);
+}
+.admin-section-head h2 { margin: 0; }
+
+.admin-config-row {
+  display: grid;
+  gap: var(--rr-space-3);
+}
+.admin-config-meta {
+  font-size: var(--rr-text-xs);
+  color: var(--rr-text-muted);
+  margin-top: 4px;
+}
+.admin-config-form {
+  display: flex;
+  gap: var(--rr-space-2);
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.admin-config-form input[type="number"] {
+  flex: 1;
+  min-width: 100px;
+  padding: var(--rr-space-2) var(--rr-space-3);
+  background: var(--rr-bg-elevated);
+  border: 1px solid var(--rr-border);
+  border-radius: var(--rr-radius-sm);
+  color: var(--rr-text);
+  font: inherit;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--rr-text-sm);
+}
+.admin-table th, .admin-table td {
+  padding: var(--rr-space-2) var(--rr-space-3);
+  text-align: left;
+  border-bottom: 1px solid var(--rr-border);
+  white-space: nowrap;
+}
+.admin-table th {
+  font-size: var(--rr-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rr-text-muted);
+}
+.admin-code {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+}
+.admin-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--rr-text-xs);
+  font-weight: 600;
+}
+.admin-pill-lobby      { background: rgba(96, 165, 250, 0.18); color: #93c5fd; }
+.admin-pill-in-progress { background: rgba(34, 197, 94, 0.18); color: #86efac; }
+.admin-pill-ended      { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+
+.admin-action {
+  padding: 4px 10px;
+  font-size: var(--rr-text-xs);
+  background: transparent;
+  border: 1px solid var(--rr-border);
+  border-radius: var(--rr-radius-sm);
+  color: var(--rr-text);
+  cursor: pointer;
+  margin-right: 4px;
+}
+.admin-action.danger-line {
+  border-color: var(--rr-danger);
+  color: var(--rr-danger);
+}
+
+.admin-empty {
+  color: var(--rr-text-muted);
+  font-size: var(--rr-text-sm);
+  margin: 0;
+}
+
+.admin-audit {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--rr-space-2);
+}
+.admin-audit li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--rr-space-2);
+  padding: var(--rr-space-2);
+  background: var(--rr-bg-elevated);
+  border-radius: var(--rr-radius-sm);
+  font-size: var(--rr-text-xs);
+}
+.admin-audit-action {
+  font-weight: 600;
+  color: var(--rr-accent);
+  font-family: ui-monospace, monospace;
+}
+.admin-audit-details {
+  color: var(--rr-text-muted);
+  font-family: ui-monospace, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-audit-ts {
+  color: var(--rr-text-muted);
+  text-align: right;
+}
+
+.admin-footer {
+  margin-top: var(--rr-space-5);
+  color: var(--rr-text-muted);
+  font-size: var(--rr-text-xs);
+  text-align: center;
+}
+.admin-footer a {
+  margin-left: var(--rr-space-2);
+}
