@@ -6,6 +6,52 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.3.8] — 2026-05-30
+
+### Changed
+- **Room codes are now 8-digit numeric** (was alphanumeric base32). Triggers native numeric keypad on mobile via `inputmode="numeric"`. Easier to share verbally, easier to type.
+- **Admin PIN input uses `inputmode="numeric" pattern="[0-9]+"`** — numeric keypad on phones, digit-only enforcement everywhere.
+- **Rate limit raised from 5 → 15 failed PIN attempts per hour per IP.** More forgiving if you misremember.
+- **Env var `BIJA` renamed to `BEEJA`** (the correct transliteration of बीज). Old `BIJA` env var still accepted as a fallback, so existing setups don't break instantly — but switch when convenient.
+
+### Docs
+- README rewritten for v0.3: covers dual deploy (GH Pages + Vercel), online mode, Sūtradhāra admin setup.
+
+## [0.3.7] — 2026-05-30
+
+### Fixed
+- Player-name and admin-PIN inputs no longer rendered uppercase. The `text-transform: uppercase` rule that was meant only for the room-code input was leaking into every `.join-field` input.
+
+### Added
+- Shared `APP_VERSION` constant in `src/config/version.js` — both home footer and Sūtradhāra footer pull from this single source.
+
+## [0.3.6] — 2026-05-30
+
+### Fixed
+- **Admin login was returning "Not authenticated" 401 for every attempt.** Root cause: Vercel was not populating `req.query.path` for the `[...path].js` catch-all route (it was `null` despite docs claiming an array). Path resolved to empty string → dispatch fell through to `requireAdmin()` → 401 before even reaching `handleLogin`. Fixed by adding a fallback that parses the path directly from `req.url`.
+- AdminError responses now embed a `_debug` object with `url`, `method`, `queryPath`, `resolvedPath`, `pinMode`, `beejaPresent` — diagnostics in the response body, independent of Vercel log views.
+
+## [0.3.5] — 2026-05-30
+
+### Fixed
+- Admin PIN input no longer styled with `text-transform: uppercase` inherited from `.join-field` rules. Was visually misleading even though the underlying value was correct.
+
+## [0.3.4] — 2026-05-30
+
+### Added
+- **Verbose server-side logging** at every login step (env presence, PIN length, suffix check, hash check, success/failure) — visible in Vercel Function logs. Lengths and head/tail of hash are logged; actual PIN content is not.
+- **Show/Hide PIN eye toggle** on the Sūtradhāra login form. Defaults to hidden.
+
+## [0.3.3] — 2026-05-30
+
+### Added
+- **Distinct error messages** for login failures: `SUFFIX_MISMATCH` (wrong day/hour suffix) vs `HASH_MISMATCH` (wrong base PIN). Helps diagnose own typos without burning rate-limit attempts.
+- **`scripts/test-admin-pin.mjs`** — local self-test. Takes your mode + BEEJA + PIN + hash and reports PASS/FAIL with reason. Lets you verify setup without hitting the live server.
+
+### Fixed
+- Server now trims whitespace from incoming PIN (defensive against accidentally pasted leading/trailing spaces).
+- `hash-admin-pin.mjs` also trims the entered PIN before hashing.
+
 ## [0.3.2] — 2026-05-30
 
 ### Added — Hardened admin secrets
