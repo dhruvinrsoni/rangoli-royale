@@ -52,7 +52,7 @@ export async function mount(target) {
         <span class="install-btn-meta">Add to home screen · play offline</span>
       </button>` : ''}
 
-    <p class="home-footer">v0.3.5 · ${online.available ? 'online' : 'offline'} · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
+    <p class="home-footer">v0.3.6 · ${online.available ? 'online' : 'offline'} · <a href="https://github.com/dhruvinrsoni/rangoli-royale" target="_blank" rel="noopener">GitHub</a></p>
   `;
 
   renderShell({ available: false, max: 0, active: 0 });

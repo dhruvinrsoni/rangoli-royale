@@ -92,17 +92,43 @@ async function dispatch(req, res, path) {
   return err(res, 404, 'NOT_FOUND', `unknown admin path: ${path}`);
 }
 
+function extractPath(req) {
+  const raw = req.query?.path;
+  if (raw) {
+    const s = Array.isArray(raw) ? raw.join('/') : String(raw);
+    if (s) return s;
+  }
+  const url = req.url || '';
+  const cleanUrl = url.split('?')[0];
+  const m = cleanUrl.match(/^\/api\/admin\/?(.*)$/);
+  if (m) return m[1];
+  return '';
+}
+
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
-  const raw = req.query?.path;
-  const path = Array.isArray(raw) ? raw.join('/') : (raw || '');
+  const path = extractPath(req);
+  const debugCtx = {
+    url: req.url,
+    method: req.method,
+    queryPath: req.query?.path ?? null,
+    resolvedPath: path,
+    pinMode: pinMode(),
+    bijaPresent: !!process.env.BIJA,
+  };
+  console.log('[admin] dispatch', debugCtx);
 
   try {
     return await dispatch(req, res, path);
   } catch (e) {
-    if (e instanceof AdminError) return err(res, e.code === 'NO_CONFIG' ? 503 : 401, e.code, e.message);
+    if (e instanceof AdminError) {
+      const status = e.code === 'NO_CONFIG' ? 503 : 401;
+      cors(res);
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(status).end(JSON.stringify({ error: e.code, message: e.message, _debug: debugCtx }));
+    }
     console.error('[admin]', path, e);
     err(res, 500, 'INTERNAL', 'Server error');
   }
