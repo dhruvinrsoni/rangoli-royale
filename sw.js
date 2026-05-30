@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rangoli-royale-v18';
+const CACHE_NAME = 'rangoli-royale-v19';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -34,6 +34,7 @@ const ASSETS_TO_CACHE = [
   './src/ui/room-create.js',
   './src/ui/room-join.js',
   './src/ui/lobby.js',
+  './src/ui/admin.js',
   './src/features/haptic.js',
   './src/features/turn-timer.js',
   './src/features/sound-fx.js',
@@ -47,6 +48,7 @@ const ASSETS_TO_CACHE = [
   './src/styles/stats.css',
   './src/styles/howto.css',
   './src/styles/room.css',
+  './src/styles/admin.css',
   './docs/rules.md'
 ];
 

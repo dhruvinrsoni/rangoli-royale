@@ -6,6 +6,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-05-30
+
+### Added — Admin dashboard
+- **Hidden `/#admin` route** for the owner. Not linked from anywhere — bookmark or remember the URL.
+- **PIN + HMAC-signed-cookie auth.** PBKDF2-SHA256 (120k iterations) hashed PIN stored as `ADMIN_PIN_HASH` env var; HMAC signing key as `ADMIN_COOKIE_SECRET`. 4-hour auto-expiry. Force-logout button.
+- **Rate limit**: 5 failed PIN attempts per IP per hour → 429. Persisted in `admin_failed_logins` table.
+- **Audit log**: every admin action (login, logout, delete-room, wipe, force-end, config change) recorded in `admin_audit` table. Recent 20 shown on dashboard.
+- **Dashboard actions**:
+  - Stats panel: rooms in use, breakdown by status, oldest room, failed logins last 24h.
+  - Live rooms table: code, status pill, host name, players (in/cap), moves, board shape, age, TTL.
+  - Per-room **Delete** (immediate) and **End** (force-end with `endReason: "Ended by admin"`, opponents see endgame).
+  - **Nuke all rooms** in one click (confirmation required).
+  - **MAX_ROOMS override**: stored in `admin_config` table, takes precedence over env var, in-memory cached for 30s. Clear override button to fall back to env.
+  - Recent audit feed.
+- **Helper script** `node scripts/hash-admin-pin.mjs` generates `ADMIN_PIN_HASH` and `ADMIN_COOKIE_SECRET` env-var values.
+
+### Added — Admin endpoints
+- `POST /api/admin/login` — verify PIN, set signed cookie
+- `POST /api/admin/logout` — clear cookie + audit
+- `GET  /api/admin/me` — check session validity
+- `GET  /api/admin/rooms` — list active rooms (admin only)
+- `DELETE /api/admin/rooms` — wipe all (admin only)
+- `DELETE /api/admin/room/<code>` — delete one (admin only)
+- `POST /api/admin/room/<code>` — force-end one (admin only)
+- `GET  /api/admin/stats` — stats + audit feed (admin only)
+- `POST /api/admin/config` — set MAX_ROOMS override (admin only)
+- `DELETE /api/admin/config?key=maxRooms` — clear override (admin only)
+
+### Security properties
+- Cookie: `HttpOnly`, `Secure`, `SameSite=Strict`, signed HMAC-SHA256, 4h expiry
+- PIN never leaves browser; server only stores PBKDF2 hash
+- Constant-time comparison on PIN and cookie verification
+- Rate limit on login endpoint
+- Every authenticated action logged with IP + timestamp
+- `MAX_ROOMS` override clamped to [1, 500] server-side
+- No admin UI elements shown if backend reports `NO_CONFIG` (missing env vars)
+
+### Changed
+- `getMaxRooms()` is now async and reads optional DB override (30s in-memory cache)
+- Cache → v19; version → 0.3.0
+
 ## [0.2.4] — 2026-05-30
 
 ### Added
