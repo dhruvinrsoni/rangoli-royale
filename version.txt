@@ -1,1 +1,1 @@
-v0.2.3 · 2026-05-30 09:00:00 IST · Long-poll (sub-second lag) + hover glow + turn-tinted board + Give up + auto-play single move + skip-turn banner
+v0.2.4 · 2026-05-30 09:45:00 IST · Reload button on screen errors + hover effects only for the active player

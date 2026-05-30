@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 
 ## [Unreleased]
 
+## [0.2.4] — 2026-05-30
+
+### Added
+- **Reload button on screen-load errors** — when a route fails to load, the user sees a clear Reload + Home action pair instead of a dead text message. Feels like an app, not a broken webpage.
+
+### Fixed
+- **Hover effects only show for the player whose turn it is.** Previously, both players saw edge-glow on hover even when it wasn't their turn. Now only the active player sees the playable cursor and edge-glow; the waiting player sees a static, read-only board.
+
 ## [0.2.3] — 2026-05-30
 
 ### Fixed
