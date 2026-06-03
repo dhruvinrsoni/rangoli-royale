@@ -2,8 +2,8 @@
 
 Two parallel deployments, one source of truth on `main`:
 
+- **Vercel** (primary — online-enabled build, backend + admin): https://rangoli-royale.vercel.app/
 - **GitHub Pages** (offline-only build): https://dhruvinrsoni.github.io/rangoli-royale/
-- **Vercel** (online-enabled build, backend + admin): https://rangoli-royale.vercel.app/
 
 Push to `main` → both auto-deploy.
 

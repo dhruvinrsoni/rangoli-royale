@@ -2,10 +2,10 @@
 
 > Draw the line. Hold the grid.
 
-A two-team strategy game on an Indian rangoli/kolam dot grid. Pass the device, or play online with friends.
+A two-team strategy game on an Indian rangoli/kolam dot grid. Play online with friends, or pass the device.
 
-**Offline build:** https://dhruvinrsoni.github.io/rangoli-royale/
-**Online build (Vercel):** https://rangoli-royale.vercel.app/
+**▶ Play online (multiplayer):** https://rangoli-royale.vercel.app/
+**Offline build (GitHub Pages):** https://dhruvinrsoni.github.io/rangoli-royale/
 
 ---
 
