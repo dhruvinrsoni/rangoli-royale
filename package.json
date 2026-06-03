@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "A 2-team strategy game on a rangoli dot grid — pass-around PWA",
-  "homepage": "https://dhruvinrsoni.github.io/rangoli-royale/",
+  "homepage": "https://rangoli-royale.vercel.app/",
   "repository": {
     "type": "git",
     "url": "https://github.com/dhruvinrsoni/rangoli-royale.git"
